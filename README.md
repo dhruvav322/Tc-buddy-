@@ -17,7 +17,9 @@
 
 ## 🚀 Quick Install
 
-1. **Download**: [Latest Release](https://github.com/dhruvav322/Tc-buddy-/releases/latest/download/privacy-guard-extension.zip)
+1. **Download**: 
+   - [Latest Release ZIP](https://github.com/dhruvav322/Tc-buddy-/releases/latest/download/privacy-guard-extension.zip) (Recommended)
+   - [Direct Download](https://github.com/dhruvav322/Tc-buddy-/raw/main/dist/privacy-guard-extension.zip) (Always latest)
 2. **Extract** the ZIP file
 3. **Open** `chrome://extensions/` (or `opera://extensions/`)
 4. **Enable** "Developer mode" (top right)
