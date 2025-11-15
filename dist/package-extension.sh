@@ -41,11 +41,21 @@ cp -r assets "$TEMP_DIR/"
 cp -r data "$TEMP_DIR/"
 
 # Remove any unnecessary files
-find "$TEMP_DIR" -name "*.md" -not -path "*/README.md" -delete
+find "$TEMP_DIR" -name "*.md" -delete  # Remove all markdown files
 find "$TEMP_DIR" -name ".git*" -delete
 find "$TEMP_DIR" -name "*.sh" -delete
 find "$TEMP_DIR" -name "test-connection.html" -delete
 find "$TEMP_DIR" -name "manifest-firefox.json" -delete
+find "$TEMP_DIR" -name "service-worker-simple.js" -delete
+find "$TEMP_DIR" -name "deepseek.js" -delete
+find "$TEMP_DIR" -name "_metadata" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$TEMP_DIR" -name "*.html" -path "*/create-*" -delete
+find "$TEMP_DIR" -name "*.html" -path "*/create-*" -delete
+find "$TEMP_DIR" -name "create-*.html" -delete
+find "$TEMP_DIR" -name "create-*.sh" -delete
+
+# Only keep icon PNG files in assets/icons
+find "$TEMP_DIR/assets/icons" -type f ! -name "*.png" -delete
 
 # Create ZIP
 echo "🗜️  Creating ZIP file..."
