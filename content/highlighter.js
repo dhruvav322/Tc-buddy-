@@ -35,7 +35,10 @@ function highlightSnippets(snippets) {
  * Highlight specific text
  */
 function highlightText(text) {
-  if (!text || text.length < 10) return;
+  if (!text || text.trim().length < 3) {
+    console.log(`Skipping highlight for text too short: "${text}"`);
+    return;
+  }
 
   // Wait for body to be ready
   if (!document.body) {
@@ -75,7 +78,13 @@ function highlightText(text) {
 
     console.log(`Found ${nodes.length} nodes containing "${text}"`);
 
+    if (nodes.length === 0) {
+      console.log(`No matches found for "${text}" on page`);
+      return;
+    }
+
     // Highlight found nodes (process in reverse to avoid offset issues)
+    let highlightedCount = 0;
     for (let i = nodes.length - 1; i >= 0; i--) {
       const { node, index, length } = nodes[i];
       try {
@@ -105,6 +114,7 @@ function highlightText(text) {
 
         try {
           range.surroundContents(mark);
+          highlightedCount++;
         } catch (error) {
           // If surroundContents fails, try alternative method
           try {
@@ -114,18 +124,21 @@ function highlightText(text) {
             if (parent) {
               parent.insertBefore(mark, textNode);
               mark.appendChild(textNode);
+              highlightedCount++;
             }
           } catch (e) {
-            console.warn('Could not highlight text:', e);
+            console.warn(`Could not highlight text "${text}" at index ${index}:`, e);
           }
         }
       } catch (error) {
         // Skip if range extraction fails
-        console.warn('Error highlighting text:', error);
+        console.warn(`Error highlighting text "${text}":`, error);
       }
     }
+    
+    console.log(`Successfully highlighted ${highlightedCount} of ${nodes.length} matches for "${text}"`);
   } catch (error) {
-    console.error('Error in highlightText:', error);
+    console.error(`Error in highlightText for "${text}":`, error);
   }
 }
 
