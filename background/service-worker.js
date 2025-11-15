@@ -536,6 +536,27 @@ function mainMessageHandler(message, sender, sendResponse) {
       return true;
     }
 
+    if (message.type === 'HIGHLIGHT_RED_FLAGS') {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, {
+          type: 'HIGHLIGHT_RED_FLAGS',
+          payload: message.payload,
+        }).catch(() => {});
+      }
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
+    if (message.type === 'CLEAR_HIGHLIGHTS') {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, {
+          type: 'CLEAR_HIGHLIGHTS',
+        }).catch(() => {});
+      }
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
     if (message.type === 'OPEN_POPUP') {
       safeSendResponse(sendResponse, { success: true });
       return true;

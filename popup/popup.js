@@ -782,13 +782,42 @@ async function handleAutoDecline() {
   }
 }
 
-function handleHighlight() {
-  if (!currentAnalysis) return;
+async function handleHighlight() {
+  if (!currentAnalysis) {
+    showError('No analysis available. Please analyze the page first.');
+    return;
+  }
 
-  chrome.tabs.sendMessage(currentTab.id, {
-    type: 'HIGHLIGHT_RED_FLAGS',
-    payload: { redFlags: currentAnalysis.red_flags },
-  });
+  if (!currentTab || !currentTab.id) {
+    showError('Unable to access current tab.');
+    return;
+  }
+
+  try {
+    // First clear any existing highlights
+    await chrome.tabs.sendMessage(currentTab.id, {
+      type: 'CLEAR_HIGHLIGHTS'
+    }).catch(() => {}); // Ignore errors if content script not ready
+
+    // Then highlight red flags
+    const response = await chrome.tabs.sendMessage(currentTab.id, {
+      type: 'HIGHLIGHT_RED_FLAGS',
+      payload: { redFlags: currentAnalysis.red_flags },
+    });
+
+    if (response && response.success) {
+      showNotification('Highlights applied to page', 'success');
+    } else {
+      showError('Failed to highlight text on page. Make sure you are on the analyzed page.');
+    }
+  } catch (error) {
+    console.error('Highlight error:', error);
+    if (error.message && error.message.includes('Could not establish connection')) {
+      showError('Content script not ready. Please refresh the page and try again.');
+    } else {
+      showError('Failed to highlight: ' + error.message);
+    }
+  }
 }
 
 function handleExport() {
