@@ -1,21 +1,20 @@
 # Privacy Guard 🛡️
 
-A comprehensive Chrome extension that helps users understand and control their online privacy before accepting cookies, terms, or sharing data.
+A comprehensive browser extension that helps users understand and control their online privacy. Analyze Terms & Conditions, Privacy Policies, detect trackers, and protect your data before sharing it.
 
 ## ✨ Features
 
 ### 🔍 Multi-Mode Analysis
-- **AI Mode**: Deep analysis using AI (Deepseek, OpenAI, Anthropic, Gemini)
-- **Local Mode**: Fast heuristic-based analysis (no API needed)
-- **Hybrid Mode**: Quick local scan + AI for complex cases (recommended)
+- **AI Mode**: Deep contextual analysis using AI (Deepseek, OpenAI, Anthropic, Gemini)
+- **Local Mode**: Fast heuristic-based analysis (no API needed, completely free)
+- **Hybrid Mode**: Uses AI if configured, otherwise falls back to local analysis (recommended)
 
-### 🎯 Detection Capabilities
+### 🎯 Automatic Detection
 - Automatically detects Terms & Conditions pages
 - Identifies Privacy Policies
 - Detects cookie consent banners (OneTrust, Cookiebot, Osano, custom)
-- Analyzes GDPR consent modals
-- Scans data collection forms
-- Account creation flows
+- Scans for privacy issues on ANY page (not just T&C pages)
+- Real-time page type detection
 
 ### 🍪 Cookie & Tracking Analysis
 - Categorizes cookies: Essential, Functional, Analytics, Marketing, Advertising
@@ -29,7 +28,6 @@ A comprehensive Chrome extension that helps users understand and control their o
 - Block known tracking scripts
 - Auto-decline cookie banners (when possible)
 - Whitelist/blacklist system for trusted sites
-- Respect DNT (Do Not Track) headers
 
 ### ⚠️ Smart Red Flag Detection
 Detects 20+ privacy concerns including:
@@ -61,13 +59,12 @@ Detects 20+ privacy concerns including:
 - **Trust Score**: Based on company reputation + policy quality
 
 ### 🎨 User Interface
-- Modern, clean design with Tailwind CSS
+- Modern, clean design
 - **Tabbed interface**: Summary, Details, Cookies, History, Dashboard, Settings
 - Color-coded risk levels (green/yellow/red)
-- Icons for each red flag category
+- Visual badges showing analysis source (AI vs Local)
 - Smooth animations and transitions
-- Dark mode support (via system preferences)
-- Fully accessible (WCAG 2.1 AA compliant)
+- Responsive design
 
 ### 📈 Privacy Dashboard
 - Visual statistics and charts
@@ -93,9 +90,9 @@ Detects 20+ privacy concerns including:
 
 ### 🎓 Onboarding Flow
 - Welcome screen explaining features
-- API key setup (optional)
-- Privacy preferences questionnaire
-- Quick tutorial (4 steps)
+- Analysis mode selection
+- Privacy preferences configuration
+- Quick tutorial (5 steps)
 - Progress indicator
 
 ## 📦 Installation
@@ -104,90 +101,114 @@ Detects 20+ privacy concerns including:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/privacy-guard.git
-cd privacy-guard
+git clone https://github.com/dhruvav322/Tc-buddy-.git
+cd tc-buddy-extension
 ```
 
-2. Create icons (required):
-```bash
-cd assets/icons
-./create-icons.sh
-# Or use ImageMagick manually - see assets/icons/README.md
-```
+2. Open your browser and navigate to:
+   - **Chrome/Edge**: `chrome://extensions/`
+   - **Opera GX**: `opera://extensions/`
+   - **Brave**: `brave://extensions/`
 
-3. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" (toggle in top right)
 
-4. Enable "Developer mode" (toggle in top right)
+4. Click "Load unpacked" and select the extension directory
 
-5. Click "Load unpacked" and select the extension directory
+5. The Privacy Guard icon should appear in your toolbar
 
-6. The Privacy Guard icon should appear in your toolbar
+### Browser Compatibility
 
-### From Chrome Web Store
-*(Coming soon)*
+- ✅ Chrome (110+)
+- ✅ Edge (110+)
+- ✅ Opera GX
+- ✅ Brave
+- ✅ Other Chromium-based browsers
 
 ## 🚀 Quick Start
 
 1. **First Time Setup**: On first install, you'll see an onboarding flow
-2. **Analyze a Page**: Navigate to a Terms & Conditions or Privacy Policy page
+   - Choose your analysis mode (Hybrid recommended)
+   - Configure privacy preferences
+   - Complete setup
+
+2. **Analyze a Page**: 
+   - Navigate to any Terms & Conditions or Privacy Policy page
+   - Or any page - the extension scans for privacy issues automatically
+
 3. **Click the Icon**: Open Privacy Guard from the toolbar
+
 4. **Click "Analyze This Page"**: Get instant privacy analysis
-5. **Review Results**: Check the Summary, Details, and Red Flags tabs
-6. **Take Action**: Block trackers, decline cookies, or generate legal requests
+
+5. **Review Results**: 
+   - Check the Summary tab for TL;DR
+   - Review Details for full analysis
+   - Check Red Flags for concerns
+   - View Cookies tab for tracking info
+
+6. **Take Action**: 
+   - Block trackers
+   - Decline cookies
+   - Generate legal requests
+   - Export analysis
 
 ## ⚙️ Configuration
 
-### API Keys (Optional)
+### API Keys (Optional - for AI Mode)
 
-For AI-powered analysis, you can configure API keys in Settings:
+For AI-powered analysis, configure API keys in the Options page:
 
-1. **Deepseek** (Recommended - cost-effective)
-   - Get key from: https://platform.deepseek.com
-   - Add in Settings → API Configuration
+1. Right-click the extension icon → **Options**
+2. Navigate to **API Configuration**
+3. Add your API key for one of these providers:
 
-2. **OpenAI**
-   - Get key from: https://platform.openai.com
-   - Add in Settings → API Configuration
+   - **Deepseek** (Recommended - cost-effective)
+     - Get key from: https://platform.deepseek.com
+   
+   - **OpenAI**
+     - Get key from: https://platform.openai.com
+   
+   - **Anthropic Claude**
+     - Get key from: https://console.anthropic.com
+   
+   - **Google Gemini**
+     - Get key from: https://makersuite.google.com
 
-3. **Anthropic Claude**
-   - Get key from: https://console.anthropic.com
-   - Add in Settings → API Configuration
-
-4. **Google Gemini**
-   - Get key from: https://makersuite.google.com
-   - Add in Settings → API Configuration
-
-**Note**: API keys are stored locally in your browser and never transmitted except to the API provider you choose.
+**Note**: 
+- API keys are stored locally in your browser
+- Keys are only sent to the API provider you choose
+- Local mode works without any API keys (completely free)
 
 ### Privacy Preferences
 
 Configure in Settings tab:
 - **Analysis Mode**: AI, Local, or Hybrid (recommended)
+- **Preferred API Provider**: Choose which AI to use (if multiple configured)
 - **Block Trackers**: Automatically block known trackers
 - **Block Cookies**: Block non-essential cookies
 - **Auto-Decline**: Automatically decline cookie banners
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
-privacy-guard/
-├── manifest.json
+tc-buddy-extension/
+├── manifest.json              # Extension manifest
 ├── background/
-│   ├── service-worker.js    # Main background logic
-│   ├── analyzer.js          # Analysis engine
-│   ├── blocker.js           # Blocking rules
-│   └── cache.js             # Caching system
+│   ├── service-worker.js      # Main background logic
+│   ├── analyzer.js            # Analysis engine
+│   ├── blocker.js            # Blocking rules
+│   └── cache.js              # Caching system
 ├── content/
-│   ├── detector.js          # Page content detection
-│   ├── highlighter.js       # Clause highlighting
-│   ├── banner-detector.js   # Cookie banner detection
-│   └── overlay.js           # Floating UI
+│   ├── detector.js           # Page content detection
+│   ├── highlighter.js        # Clause highlighting
+│   ├── banner-detector.js    # Cookie banner detection
+│   ├── overlay.js            # Floating UI
+│   └── dom-utils.js          # DOM utilities
 ├── popup/
 │   ├── popup.html
 │   ├── popup.js
 │   ├── popup.css
 │   └── components/
-│       ├── dashboard.js     # Privacy dashboard
+│       ├── dashboard.js      # Privacy dashboard
 │       └── qa-chat.js        # Q&A chat interface
 ├── options/
 │   ├── options.html
@@ -196,47 +217,46 @@ privacy-guard/
 │   ├── onboarding.html
 │   └── onboarding.js
 ├── lib/
-│   ├── api-manager.js       # Multi-provider API client
-│   ├── heuristics.js        # Local analysis rules
-│   ├── patterns.js          # Detection patterns
-│   └── legal-tools.js       # GDPR/CCPA generators
+│   ├── api-manager.js        # Multi-provider API client
+│   ├── heuristics.js         # Local analysis rules
+│   ├── patterns.js           # Detection patterns
+│   ├── legal-tools.js        # GDPR/CCPA generators
+│   └── browser-compat.js    # Cross-browser compatibility
 ├── data/
 │   ├── tracker-domains.json
 │   ├── cookie-categories.json
 │   ├── red-flag-keywords.json
 │   └── blocking-rules.json
 └── assets/
-    └── icons/               # Extension icons
+    └── icons/                # Extension icons
 ```
 
-## 🔒 Privacy
+## 🔒 Privacy & Security
 
 Privacy Guard is designed with privacy as a core principle:
 
 - ✅ All analysis runs locally or through your configured API keys
 - ✅ No data collection or tracking
 - ✅ API keys stored securely in browser storage
-- ✅ No external analytics (unless you opt-in)
+- ✅ No external analytics
 - ✅ Open source and auditable
 - ✅ No personal information transmitted
-
-**See [PRIVACY.md](PRIVACY.md) for detailed privacy policy**
+- ✅ Works offline (local mode)
 
 ## 🛠️ Development
 
 ### Prerequisites
 
-- Chrome/Edge browser (Manifest V3 compatible, version 110+)
-- ImageMagick (for icon generation, optional)
+- Chrome/Edge/Opera GX browser (Manifest V3 compatible, version 110+)
+- Git
 
-### Building
+### Setup
 
-The extension is ready to use as-is. For production:
-
-1. Ensure all files are in place
-2. Create icons (see `assets/icons/README.md` or run `create-icons.sh`)
-3. Test in Chrome
-4. Package for Chrome Web Store
+1. Clone the repository
+2. Open browser extensions page
+3. Enable Developer mode
+4. Load unpacked extension
+5. Start developing!
 
 ### Testing
 
@@ -252,21 +272,21 @@ Test on various sites:
 - **Content scripts**: Use browser DevTools on the page
 - **Popup**: Right-click popup → Inspect
 
-## 📚 Documentation
+## 📚 Recent Updates
 
-- **[README.md](README.md)** - This file
-- **[PRIVACY.md](PRIVACY.md)** - Privacy policy for the extension
-- **[FAQ.md](FAQ.md)** - Frequently asked questions
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
-- **[BUILD.md](BUILD.md)** - Build and deployment guide
-- **[CODE_REVIEW.md](CODE_REVIEW.md)** - Code review report
+### v2.0.0
+- ✅ Fixed service worker connection errors on install/reload
+- ✅ Improved API key saving with verification
+- ✅ Better error handling and retry logic
+- ✅ Fixed analysis mode detection and badge display
+- ✅ Enhanced Gemini API debugging
+- ✅ Service worker ready before onboarding opens
+- ✅ Cross-browser compatibility (Opera GX, Chrome, Edge, Brave)
+- ✅ Privacy scanning on any page (not just T&C pages)
 
 ## 🤝 Contributing
 
-Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Areas for Contribution
+Contributions welcome! Areas for contribution:
 
 - Detection improvements (better pattern matching)
 - UI/UX enhancements
@@ -286,24 +306,8 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/privacy-guard/issues)
-- **Documentation**: [Wiki](https://github.com/yourusername/privacy-guard/wiki)
-- **Email**: support@privacyguard.example
-
-## 🗺️ Roadmap
-
-### v2.1 (Planned)
-- [ ] Enhanced dashboard with more charts
-- [ ] Community trust ratings
-- [ ] Policy change detection (diff view)
-- [ ] Export reports as PDF
-- [ ] Browser extension for Firefox
-
-### v2.2 (Future)
-- [ ] Mobile app
-- [ ] Browser extension for Safari
-- [ ] API for developers
-- [ ] Browser extension for Edge
+- **Issues**: [GitHub Issues](https://github.com/dhruvav322/Tc-buddy-/issues)
+- **Repository**: [GitHub Repo](https://github.com/dhruvav322/Tc-buddy-)
 
 ## 🎯 Use Cases
 
@@ -339,18 +343,10 @@ MIT License - see [LICENSE](LICENSE) file
 - 🚀 **Fast**: Analysis completes in under 3 seconds
 - 🔒 **Private**: All processing local or user-controlled
 - 🎨 **Beautiful**: Modern, intuitive interface
-- ♿ **Accessible**: WCAG 2.1 AA compliant
 - 📱 **Responsive**: Works on all screen sizes
 - 🔧 **Customizable**: Extensive settings and preferences
-- 📚 **Well-Documented**: Comprehensive guides and FAQs
-
-## 🙏 Acknowledgments
-
-Built with:
-- Chrome Extension Manifest V3
-- Tailwind CSS
-- Deepseek AI (and other providers)
-- Canvas API for charts
+- 💰 **Free**: Local mode works without any API keys
+- 🌐 **Cross-Browser**: Works on Chrome, Edge, Opera GX, Brave
 
 ---
 
