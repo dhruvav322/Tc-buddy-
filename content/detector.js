@@ -9,6 +9,7 @@ const nativeAppendChild = Node.prototype.appendChild;
 
 /**
  * Detect document type on current page
+ * Also scans for privacy issues on ANY page
  */
 function detectPageType() {
   const url = window.location.href;
@@ -16,6 +17,7 @@ function detectPageType() {
   
   const types = detectDocumentTypeLocal(url, pageText);
   
+  // Always scan for privacy issues, not just on T&C/Privacy pages
   if (types.length > 0) {
     // Notify background script
     chrome.runtime.sendMessage({
@@ -30,6 +32,156 @@ function detectPageType() {
     // Show floating badge
     showDetectionBadge(types);
   }
+  
+  // Always scan for privacy issues on any page
+  scanPageForPrivacyIssues();
+}
+
+/**
+ * Scan current page for privacy issues (cookies, trackers, etc.)
+ * Works on ANY page, not just T&C/Privacy Policy pages
+ */
+function scanPageForPrivacyIssues() {
+  const url = window.location.href;
+  const issues = [];
+  
+  // Check for tracking scripts
+  const scripts = document.querySelectorAll('script[src]');
+  const trackingDomains = [
+    'google-analytics.com',
+    'googletagmanager.com',
+    'facebook.net',
+    'doubleclick.net',
+    'scorecardresearch.com',
+    'quantserve.com',
+    'adservice.google',
+    'adsystem.amazon',
+  ];
+  
+  scripts.forEach(script => {
+    const src = script.src.toLowerCase();
+    trackingDomains.forEach(domain => {
+      if (src.includes(domain)) {
+        issues.push({
+          type: 'tracker',
+          domain: domain,
+          severity: 'medium',
+        });
+      }
+    });
+  });
+  
+  // Check for iframes (often used for tracking)
+  const iframes = document.querySelectorAll('iframe[src]');
+  iframes.forEach(iframe => {
+    const src = iframe.src.toLowerCase();
+    trackingDomains.forEach(domain => {
+      if (src.includes(domain)) {
+        issues.push({
+          type: 'tracker',
+          domain: domain,
+          severity: 'medium',
+        });
+      }
+    });
+  });
+  
+  // Check for data collection forms
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    const inputs = form.querySelectorAll('input[type="email"], input[type="tel"], input[name*="email"], input[name*="phone"]');
+    if (inputs.length > 0) {
+      issues.push({
+        type: 'data_collection',
+        element: 'form',
+        severity: 'low',
+      });
+    }
+  });
+  
+  // If privacy issues found, notify background and show badge
+  if (issues.length > 0) {
+    chrome.runtime.sendMessage({
+      type: 'PRIVACY_ISSUES_DETECTED',
+      payload: {
+        url,
+        issues,
+        timestamp: Date.now(),
+      },
+    });
+    
+    // Show privacy warning badge
+    showPrivacyWarningBadge(issues);
+  }
+}
+
+/**
+ * Show privacy warning badge for any page with privacy issues
+ */
+function showPrivacyWarningBadge(issues) {
+  // Remove existing badge
+  const existing = document.getElementById('privacy-guard-warning-badge');
+  if (existing) existing.remove();
+  
+  const trackerCount = issues.filter(i => i.type === 'tracker').length;
+  const dataCollectionCount = issues.filter(i => i.type === 'data_collection').length;
+  
+  let warningText = 'Privacy issues detected: ';
+  const warnings = [];
+  if (trackerCount > 0) warnings.push(`${trackerCount} tracker${trackerCount > 1 ? 's' : ''}`);
+  if (dataCollectionCount > 0) warnings.push(`${dataCollectionCount} data collection form${dataCollectionCount > 1 ? 's' : ''}`);
+  warningText += warnings.join(', ');
+  
+  // Use cached native DOM methods
+  let badge;
+  try {
+    badge = nativeCreateElement.call(document, 'div');
+  } catch (error) {
+    badge = document.createElement('div');
+  }
+  
+  badge.id = 'privacy-guard-warning-badge';
+  badge.className = 'privacy-guard-badge privacy-guard-warning';
+  badge.innerHTML = `
+    <span class="privacy-guard-badge-icon">⚠️</span>
+    <span class="privacy-guard-badge-text">${warningText}</span>
+    <button class="privacy-guard-badge-close" aria-label="Close">×</button>
+  `;
+  
+  const closeBtn = badge.querySelector('.privacy-guard-badge-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      badge.remove();
+    });
+  }
+  
+  // Wait for body to be available
+  if (!document.body) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        try {
+          nativeAppendChild.call(document.body, badge);
+        } catch (error) {
+          document.body.appendChild(badge);
+        }
+      });
+      return;
+    }
+  }
+  
+  try {
+    nativeAppendChild.call(document.body, badge);
+  } catch (error) {
+    document.body.appendChild(badge);
+  }
+  
+  // Auto-hide after 15 seconds
+  setTimeout(() => {
+    if (badge.parentNode) {
+      badge.style.opacity = '0';
+      setTimeout(() => badge.remove(), 300);
+    }
+  }, 15000);
 }
 
 /**

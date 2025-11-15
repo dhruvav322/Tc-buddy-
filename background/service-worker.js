@@ -407,6 +407,21 @@ function mainMessageHandler(message, sender, sendResponse) {
       return true;
     }
 
+    if (message.type === 'PAGE_TYPE_DETECTED') {
+      // Log page type detection (for analytics/debugging)
+      console.log('Page type detected:', message.payload.types);
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
+    if (message.type === 'PRIVACY_ISSUES_DETECTED') {
+      // Log privacy issues found on page
+      console.log('Privacy issues detected:', message.payload.issues);
+      // Could store this for dashboard/analytics
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
     safeSendResponse(sendResponse, { success: false, error: `Unknown message type: ${message.type}` });
     return true;
   } catch (error) {

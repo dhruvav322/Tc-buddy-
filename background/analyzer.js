@@ -32,8 +32,8 @@ function getAPIManager() {
  * @returns {Promise<object>} Analysis result
  */
 export async function analyzeDocument({ url, text, mode = 'hybrid', provider = 'auto' }) {
-  if (!url || !text || text.length < 100) {
-    throw new Error('Invalid document: URL and at least 100 characters of text required');
+  if (!url || !text || text.length < 50) {
+    throw new Error('Invalid document: URL and at least 50 characters of text required');
   }
 
   // Check cache first

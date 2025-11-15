@@ -1,5 +1,15 @@
 /* Privacy Guard Content Script Styles */
 
+.privacy-guard-badge.privacy-guard-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  color: #856404;
+}
+
+.privacy-guard-badge.privacy-guard-warning .privacy-guard-badge-icon {
+  color: #ffc107;
+}
+
 .privacy-guard-badge {
   position: fixed;
   top: 20px;

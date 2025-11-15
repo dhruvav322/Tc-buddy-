@@ -270,8 +270,8 @@ async function handleAnalyze() {
   try {
     // Extract text from page
     const text = await extractTextFromPage(currentTab.id);
-    if (!text || text.length < 100) {
-      throw new Error('Page does not contain enough text to analyze. Please navigate to a Terms & Conditions or Privacy Policy page.');
+    if (!text || text.length < 50) {
+      throw new Error('Page does not contain enough text to analyze. The page may still be loading or may not have readable content.');
     }
 
     // Get analysis mode
