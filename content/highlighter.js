@@ -73,6 +73,8 @@ function highlightText(text) {
       }
     }
 
+    console.log(`Found ${nodes.length} nodes containing "${text}"`);
+
     // Highlight found nodes (process in reverse to avoid offset issues)
     for (let i = nodes.length - 1; i >= 0; i--) {
       const { node, index, length } = nodes[i];
@@ -148,9 +150,11 @@ function highlightRedFlags(redFlags) {
   const keywords = [];
   
   if (!redFlags || typeof redFlags !== 'object') {
-    console.warn('Invalid red flags data for highlighting');
+    console.warn('Invalid red flags data for highlighting:', redFlags);
     return;
   }
+
+  console.log('Processing red flags for highlighting:', redFlags);
 
   for (const [key, value] of Object.entries(redFlags)) {
     if (value && typeof value === 'string' && value.toLowerCase().startsWith('yes')) {
@@ -158,10 +162,28 @@ function highlightRedFlags(redFlags) {
       const match = value.match(/"([^"]+)"/);
       if (match && match[1]) {
         keywords.push(match[1]);
+        console.log(`Found keyword from ${key}: "${match[1]}"`);
       } else {
-        // Fallback: use the key name as keyword
-        const keyWords = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1));
-        keywords.push(keyWords.join(' '));
+        // Fallback: use common keywords based on red flag type
+        const commonKeywords = {
+          'data_selling': ['sell', 'sell your data', 'monetize'],
+          'data_sharing': ['share', 'third parties', 'partners'],
+          'arbitration': ['arbitration', 'arbitrate', 'waive'],
+          'location_tracking': ['location', 'geolocation', 'track location'],
+          'biometric_data': ['biometric', 'fingerprint', 'facial recognition'],
+          'ai_training': ['train', 'machine learning', 'ai model'],
+          'tracking_cookies': ['tracking cookies', 'cookies'],
+          'targeted_advertising': ['targeted', 'personalized ads', 'advertising'],
+        };
+        
+        if (commonKeywords[key]) {
+          keywords.push(...commonKeywords[key]);
+          console.log(`Using common keywords for ${key}:`, commonKeywords[key]);
+        } else {
+          // Last resort: use formatted key name
+          const keyWords = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1));
+          keywords.push(keyWords.join(' '));
+        }
       }
     }
   }
@@ -170,7 +192,7 @@ function highlightRedFlags(redFlags) {
     console.log('Highlighting keywords:', keywords);
     highlightSnippets(keywords);
   } else {
-    console.log('No keywords found to highlight');
+    console.log('No keywords found to highlight. Red flags:', redFlags);
   }
 }
 
