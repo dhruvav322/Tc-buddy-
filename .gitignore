@@ -60,3 +60,18 @@ docs/_build/
 *.bak
 *.backup
 
+# Old/unused files
+background.js
+popup.js
+popup.html
+tailwind.css
+manifest-firefox.json
+test-connection.html
+CHECK_API_SETTINGS.js
+background/service-worker-simple.js
+
+# Debug/documentation files (keep only README.md)
+*.md
+!README.md
+!assets/icons/README.md
+
