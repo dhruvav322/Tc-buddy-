@@ -88,7 +88,8 @@ async function initialize() {
       // If we have analysis data, load it
       if (lastAnalysis && openToTab === 'details') {
         currentAnalysis = lastAnalysis;
-        displayAnalysis(lastAnalysis);
+        updateUI(lastAnalysis);
+        saveToHistory(lastAnalysis);
         chrome.storage.local.remove('lastAnalysis');
       }
     }
