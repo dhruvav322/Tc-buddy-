@@ -13,25 +13,35 @@ document.addEventListener('DOMContentLoaded', initialize);
 /**
  * Wake up service worker by sending a ping
  */
-async function wakeServiceWorker() {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'TEST' }, (response) => {
-      if (chrome.runtime.lastError) {
-        // Service worker not ready, wait and retry
-        setTimeout(() => {
-          chrome.runtime.sendMessage({ type: 'TEST' }, (retryResponse) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else {
-              resolve(retryResponse);
-            }
-          });
-        }, 500);
-      } else {
-        resolve(response);
+async function wakeServiceWorker(maxRetries = 5, delay = 300) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'TEST' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      // Success - service worker is ready
+      if (attempt > 0) {
+        console.log(`✅ Service worker woke up after ${attempt + 1} attempts`);
       }
-    });
-  });
+      return response;
+    } catch (error) {
+      // If this is the last attempt, throw the error
+      if (attempt === maxRetries - 1) {
+        console.warn('⚠️ Service worker not responding after', maxRetries, 'attempts');
+        // Don't throw - just log and continue (might still work)
+        return null;
+      }
+      // Wait before retrying (exponential backoff)
+      const waitTime = delay * Math.pow(2, attempt);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
 }
 
 async function initialize() {
@@ -40,13 +50,15 @@ async function initialize() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     currentTab = tab;
 
-    // Wake up service worker first
+    // CRITICAL: Wait for service worker to be ready BEFORE doing anything else
+    // This prevents "connection error" when extension is first opened
+    console.log('Waiting for service worker to be ready...');
     try {
-      await wakeServiceWorker();
-      console.log('Service worker is awake');
+      await wakeServiceWorker(10, 200); // More retries, shorter delay
+      console.log('✅ Service worker is ready');
     } catch (error) {
-      console.warn('Service worker wake-up failed:', error);
-      // Continue anyway - might work on retry
+      console.warn('⚠️ Service worker not responding, but continuing...');
+      // Don't throw - let it continue, might work on next attempt
     }
 
     // Load settings
@@ -91,13 +103,17 @@ function setupEventListeners() {
 
   // Settings
   document.querySelectorAll('input[name="analysisMode"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      chrome.storage.local.set({ analysisMode: e.target.value });
+    radio.addEventListener('change', async (e) => {
+      await chrome.storage.local.set({ analysisMode: e.target.value });
+      console.log('✅ Analysis mode saved:', e.target.value);
+      showNotification(`Analysis mode set to: ${e.target.value.toUpperCase()}`);
     });
   });
 
-  document.getElementById('apiProvider').addEventListener('change', (e) => {
-    chrome.storage.local.set({ preferredApiProvider: e.target.value });
+  document.getElementById('apiProvider').addEventListener('change', async (e) => {
+    await chrome.storage.local.set({ preferredApiProvider: e.target.value });
+    console.log('✅ API provider saved:', e.target.value);
+    showNotification(`API provider set to: ${e.target.value}`);
   });
 
   document.getElementById('saveDeepseekKey').addEventListener('click', () => {
@@ -281,6 +297,11 @@ async function handleAnalyze() {
     ]);
 
     const mode = analysisMode === 'ai' ? 'ai' : analysisMode === 'local' ? 'local' : 'hybrid';
+    
+    // Log settings for debugging
+    console.log('🔍 Analysis Settings:');
+    console.log('  Mode:', mode, '(from storage:', analysisMode, ')');
+    console.log('  Provider:', preferredApiProvider);
 
     // Wake up service worker first
     try {
@@ -291,38 +312,16 @@ async function handleAnalyze() {
 
     // Send analysis request with error handling
     let response;
-    try {
-      response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          type: 'ANALYZE_DOCUMENT',
-          payload: {
-            url: currentTab.url,
-            text,
-            mode,
-            provider: preferredApiProvider,
-          },
-        }, (response) => {
-          // Check for runtime errors
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          resolve(response);
-        });
-      });
-    } catch (error) {
-      // Service worker might not be ready, wake it up and retry once
-      if (error.message?.includes('Receiving end does not exist') || 
-          error.message?.includes('Could not establish connection')) {
-        console.log('Service worker not ready, waking up and retrying...');
-        try {
-          await wakeServiceWorker();
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (wakeError) {
-          console.warn('Wake-up failed:', wakeError);
-        }
-        
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (retries < maxRetries) {
+      try {
         response = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Request timeout - service worker not responding'));
+          }, 10000); // 10 second timeout
+          
           chrome.runtime.sendMessage({
             type: 'ANALYZE_DOCUMENT',
             payload: {
@@ -332,6 +331,8 @@ async function handleAnalyze() {
               provider: preferredApiProvider,
             },
           }, (response) => {
+            clearTimeout(timeout);
+            // Check for runtime errors
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message));
               return;
@@ -339,27 +340,75 @@ async function handleAnalyze() {
             resolve(response);
           });
         });
-      } else {
-        throw error;
+        // Success - break out of retry loop
+        break;
+      } catch (error) {
+        retries++;
+        const isConnectionError = error.message?.includes('Receiving end does not exist') || 
+                                  error.message?.includes('Could not establish connection') ||
+                                  error.message?.includes('Request timeout');
+        
+        if (isConnectionError && retries < maxRetries) {
+          console.log(`Service worker not ready (attempt ${retries}/${maxRetries}), retrying...`);
+          // Wake up service worker and wait
+          await wakeServiceWorker(3, 200);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          continue; // Retry
+        } else {
+          // Max retries reached or different error
+          throw error;
+        }
       }
     }
 
     if (!response?.success) {
-      throw new Error(response?.error || 'Analysis failed');
+      const errorMsg = response?.error || 'Analysis failed';
+      // Don't show error dialog for connection errors - show user-friendly message
+      if (errorMsg.includes('connection') || errorMsg.includes('Receiving end')) {
+        showError('Extension is still initializing. Please wait a moment and try again.');
+      } else {
+        throw new Error(errorMsg);
+      }
+      return;
     }
 
     currentAnalysis = response;
+    
+    // Log which mode was used for debugging
+    if (response.provider) {
+      console.log('✅ Analysis complete using:', response.provider, 'Mode:', mode);
+    } else {
+      console.log('✅ Analysis complete using: Local heuristics, Mode:', mode);
+    }
+    
+    // Show warning if AI mode was selected but couldn't be used
+    if (response.warning) {
+      showNotification(response.warning, 'warning');
+    }
+    
     updateUI(response);
     saveToHistory(response);
 
   } catch (error) {
-    showError(error.message);
+    // Handle connection errors gracefully without showing system dialog
+    const errorMsg = error.message || 'Unknown error';
+    if (errorMsg.includes('Receiving end does not exist') || 
+        errorMsg.includes('Could not establish connection') ||
+        errorMsg.includes('Extension context invalidated')) {
+      showError('Extension is still initializing. Please wait a few seconds and try again.');
+      console.warn('Connection error (this is normal after installing/reloading):', errorMsg);
+    } else {
+      showError(errorMsg);
+    }
   } finally {
     showLoading(false);
   }
 }
 
 function updateUI(analysis) {
+  // Update analysis source badge
+  updateAnalysisSourceBadge(analysis);
+
   // Update risk badge
   updateRiskBadge(analysis.risk || 'Watch');
 
@@ -374,6 +423,59 @@ function updateUI(analysis) {
   // Update details tab
   renderFullAnalysis(analysis);
   renderRedFlags(analysis.red_flags || {});
+}
+
+function updateAnalysisSourceBadge(analysis) {
+  const badge = document.getElementById('analysisSourceBadge');
+  if (!badge) return;
+
+  // Determine if AI was actually used (not just selected)
+  const provider = analysis.provider || 'Unknown';
+  const source = analysis.source; // This is now set correctly in analyzer.js
+  const mode = analysis.mode || 'hybrid';
+  
+  // Debug logging
+  console.log('🏷️ Badge Update:');
+  console.log('  Provider:', provider);
+  console.log('  Source:', source);
+  console.log('  Mode:', mode);
+  
+  // Check source first (most reliable), then fall back to provider name
+  let isAI = false;
+  if (source === 'api') {
+    isAI = true;
+  } else if (source === 'local') {
+    isAI = false;
+  } else {
+    // Fallback: check provider name
+    isAI = !provider.includes('Local') && !provider.includes('Heuristics');
+  }
+  
+  // If mode is 'ai' but source is 'local', show warning
+  if (mode === 'ai' && !isAI) {
+    console.warn('⚠️ AI mode selected but local analysis was used!');
+    console.warn('⚠️ This means API key is not configured or API call failed');
+  }
+
+  badge.classList.remove('hidden', 'ai', 'local');
+  badge.classList.add(isAI ? 'ai' : 'local');
+
+  if (isAI) {
+    // Show provider name (e.g., "Deepseek", "OpenAI", "Anthropic", "Gemini")
+    const providerName = provider.replace('Local (Heuristics)', '').trim() || 'AI';
+    badge.innerHTML = `🤖 AI Analysis: ${providerName}`;
+    badge.title = 'This analysis used AI for deeper, contextual understanding';
+  } else {
+    // Show warning if AI mode was selected but local was used
+    if (mode === 'ai' && analysis.warning) {
+      badge.innerHTML = `⚠️ ${analysis.warning}`;
+      badge.title = analysis.warning;
+      badge.classList.add('local'); // Use local styling for warning
+    } else {
+      badge.innerHTML = `⚡ Local Analysis: Quick Scan`;
+      badge.title = 'This analysis used local keyword matching (fast, free, but less detailed)';
+    }
+  }
 }
 
 function renderBullets(bullets) {
@@ -755,8 +857,37 @@ function showError(message) {
   alert(message);
 }
 
-function showNotification(message) {
+function showNotification(message, type = 'info') {
   // Simple notification - could be enhanced with toast
+  // For warnings, show a more prominent notification
+  if (type === 'warning') {
+    const warningDiv = document.createElement('div');
+    warningDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffc107;
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      max-width: 400px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+    `;
+    warningDiv.textContent = message;
+    document.body.appendChild(warningDiv);
+    setTimeout(() => {
+      warningDiv.style.opacity = '0';
+      warningDiv.style.transition = 'opacity 0.3s';
+      setTimeout(() => warningDiv.remove(), 300);
+    }, 5000);
+    return;
+  }
+  
   const badge = document.getElementById('riskBadge');
   const originalText = badge.textContent;
   badge.textContent = message;

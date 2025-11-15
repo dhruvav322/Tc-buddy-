@@ -3,8 +3,15 @@
  * Highlights red flag text on the page
  */
 
-// Cache native DOM methods before websites can modify them
-const nativeCreateElement = Document.prototype.createElement;
+// Cache native DOM methods before websites can modify them (use shared namespace to avoid conflicts)
+if (typeof window.PrivacyGuardNative === 'undefined') {
+  window.PrivacyGuardNative = {
+    createElement: Document.prototype.createElement,
+    appendChild: Node.prototype.appendChild,
+  };
+}
+// Use var to allow redeclaration across multiple content scripts
+var nativeCreateElement = window.PrivacyGuardNative.createElement.bind(document);
 
 const HIGHLIGHT_CLASS = 'privacy-guard-highlight';
 const HIGHLIGHT_COLOR = '#fef3c7';
@@ -60,7 +67,7 @@ function highlightText(text) {
       // Use cached native createElement to avoid conflicts with modified prototypes
       let mark;
       try {
-        mark = nativeCreateElement.call(document, 'mark');
+        mark = nativeCreateElement('mark');
       } catch (error) {
         mark = document.createElement('mark');
       }

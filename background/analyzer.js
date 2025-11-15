@@ -23,6 +23,36 @@ function getAPIManager() {
 }
 
 /**
+ * Check if API is configured for the given provider
+ */
+async function checkApiConfigured(provider) {
+  const manager = getAPIManager();
+  if (!manager) {
+    console.log('❌ API manager not available');
+    return false;
+  }
+  
+  if (provider === 'auto') {
+    // Check if any provider is configured
+    const available = await manager.getAvailableProviders();
+    console.log('🔍 Available providers:', available.map(p => `${p.key}: ${p.configured ? '✅' : '❌'}`).join(', '));
+    const hasConfigured = available.some(p => p.configured && p.key !== 'local');
+    console.log('🔑 Auto mode - API configured:', hasConfigured);
+    return hasConfigured;
+  }
+  
+  const providerObj = manager.providers[provider];
+  if (!providerObj) {
+    console.log(`❌ Provider "${provider}" not found`);
+    return false;
+  }
+  
+  const isConfigured = await providerObj.isConfigured();
+  console.log(`🔑 Provider "${provider}" configured:`, isConfigured);
+  return isConfigured;
+}
+
+/**
  * Analyze document text
  * @param {object} params - Analysis parameters
  * @param {string} params.url - Document URL
@@ -36,34 +66,70 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
     throw new Error('Invalid document: URL and at least 50 characters of text required');
   }
 
-  // Check cache first
+  // Check cache first, but only if mode matches (don't use cached local result for AI mode)
   const cached = await getCachedAnalysis(url);
-  if (cached) {
+  if (cached && cached.mode === mode && cached.provider === provider) {
+    console.log('📦 Using cached result (mode:', mode, ', provider:', provider, ')');
     return { ...cached, source: 'cache' };
+  } else if (cached) {
+    console.log('🔄 Cache mismatch - mode:', cached.mode, 'vs', mode, ', provider:', cached.provider, 'vs', provider);
+    console.log('🔄 Getting fresh analysis...');
   }
 
   let result;
 
-  // Hybrid mode: quick local scan first, then AI if needed
+  // Hybrid mode: Use AI if configured, otherwise use local (no confusing switching)
   if (mode === 'hybrid') {
-    const localResult = await analyzeLocally(text);
+    const hasApiConfigured = await checkApiConfigured(provider);
     
-    // If local scan shows high risk or many flags, use AI for detailed analysis
-    const flagCount = Object.values(localResult.red_flags || {}).filter(v => v.startsWith('Yes')).length;
-    if (flagCount >= 3 || localResult.risk === 'Risky') {
+    if (hasApiConfigured) {
+      console.log('🤖 Hybrid mode: Using AI analysis (API configured)');
       try {
         result = await analyzeWithAI(text, provider);
-        result.local_preview = localResult;
       } catch (error) {
-        console.warn('AI analysis failed, using local:', error);
-        result = localResult;
+        console.warn('AI analysis failed, falling back to local:', error);
+        result = await analyzeLocally(text);
+        result.warning = `AI analysis failed: ${error.message}. Using local analysis instead.`;
       }
     } else {
-      result = localResult;
+      console.log('📍 Hybrid mode: Using local analysis (API not configured)');
+      result = await analyzeLocally(text);
     }
   } else if (mode === 'ai') {
-    result = await analyzeWithAI(text, provider);
+    console.log('🤖 AI mode: Using API analysis');
+    console.log('🔍 Checking API configuration for provider:', provider);
+    
+    // Check if API is configured before attempting
+    const hasApiConfigured = await checkApiConfigured(provider);
+    console.log('🔑 API configured:', hasApiConfigured);
+    
+    if (!hasApiConfigured) {
+      console.warn('⚠️ AI mode selected but no API key configured. Falling back to local analysis.');
+      console.warn('💡 Please add an API key in Options page to use AI mode.');
+      console.warn('💡 Make sure:');
+      console.warn('   1. API key is saved in Options page');
+      console.warn('   2. Provider is set correctly (not "auto" if you want specific provider)');
+      console.warn('   3. Reload extension after saving key');
+      result = await analyzeLocally(text);
+      result.warning = 'AI mode selected but no API key configured. Using local analysis instead.';
+      result.mode = mode; // Keep the selected mode for debugging
+    } else {
+      try {
+        console.log('🚀 Starting AI analysis...');
+        result = await analyzeWithAI(text, provider);
+        console.log('✅ AI analysis completed successfully');
+        console.log('📊 Result provider:', result.provider);
+      } catch (error) {
+        console.error('❌ AI analysis failed:', error);
+        console.error('❌ Error details:', error.message);
+        console.warn('Falling back to local analysis');
+        result = await analyzeLocally(text);
+        result.warning = `AI analysis failed: ${error.message}. Using local analysis instead.`;
+        result.mode = mode; // Keep the selected mode for debugging
+      }
+    }
   } else {
+    console.log('📊 Local mode: Using heuristic analysis');
     result = await analyzeLocally(text);
   }
 
@@ -71,11 +137,18 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
   result.url = url;
   result.analyzed_at = new Date().toISOString();
   result.mode = mode;
+  
+  // Set source based on actual provider used, not just mode
+  // If provider name contains "Local" or "Heuristics", it's local analysis
+  const actualSource = (result.provider && (result.provider.includes('Local') || result.provider.includes('Heuristics'))) 
+    ? 'local' 
+    : 'api';
+  result.source = actualSource;
 
   // Cache result
   await setCachedAnalysis(url, result);
 
-  return { ...result, source: mode === 'local' ? 'local' : 'api' };
+  return result;
 }
 
 /**
@@ -86,6 +159,8 @@ async function analyzeWithAI(text, provider) {
   if (!manager) {
     throw new Error('API manager not available. Please use Local mode.');
   }
+  
+  console.log('🤖 Using AI analysis with provider:', provider);
   const result = await manager.analyze(text, provider);
   
   // Ensure all required fields are present
@@ -97,7 +172,7 @@ async function analyzeWithAI(text, provider) {
     privacy_score: result.privacy_score ?? 50,
     readability_score: result.readability_score ?? 12,
     trust_score: result.trust_score ?? 50,
-    provider: result.provider || 'AI',
+    provider: result.provider || provider || 'AI',
   };
 }
 

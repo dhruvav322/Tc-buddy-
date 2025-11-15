@@ -3,9 +3,16 @@
  * Identifies Terms & Conditions, Privacy Policies, Cookie pages
  */
 
-// Cache native DOM methods before websites can modify them
-const nativeCreateElement = Document.prototype.createElement;
-const nativeAppendChild = Node.prototype.appendChild;
+// Cache native DOM methods before websites can modify them (use shared namespace to avoid conflicts)
+if (typeof window.PrivacyGuardNative === 'undefined') {
+  window.PrivacyGuardNative = {
+    createElement: Document.prototype.createElement,
+    appendChild: Node.prototype.appendChild,
+  };
+}
+// Use var to allow redeclaration across multiple content scripts
+var nativeCreateElement = window.PrivacyGuardNative.createElement.bind(document);
+var nativeAppendChild = window.PrivacyGuardNative.appendChild;
 
 /**
  * Detect document type on current page
@@ -19,7 +26,7 @@ function detectPageType() {
   
   // Always scan for privacy issues, not just on T&C/Privacy pages
   if (types.length > 0) {
-    // Notify background script
+    // Notify background script (fire and forget - no response needed)
     chrome.runtime.sendMessage({
       type: 'PAGE_TYPE_DETECTED',
       payload: {
@@ -27,6 +34,8 @@ function detectPageType() {
         types,
         timestamp: Date.now(),
       },
+    }).catch(() => {
+      // Ignore errors - this is just a notification
     });
 
     // Show floating badge
@@ -101,6 +110,7 @@ function scanPageForPrivacyIssues() {
   
   // If privacy issues found, notify background and show badge
   if (issues.length > 0) {
+    // Notify background script (fire and forget - no response needed)
     chrome.runtime.sendMessage({
       type: 'PRIVACY_ISSUES_DETECTED',
       payload: {
@@ -108,6 +118,8 @@ function scanPageForPrivacyIssues() {
         issues,
         timestamp: Date.now(),
       },
+    }).catch(() => {
+      // Ignore errors - this is just a notification
     });
     
     // Show privacy warning badge
@@ -135,7 +147,7 @@ function showPrivacyWarningBadge(issues) {
   // Use cached native DOM methods
   let badge;
   try {
-    badge = nativeCreateElement.call(document, 'div');
+    badge = nativeCreateElement('div');
   } catch (error) {
     badge = document.createElement('div');
   }
@@ -195,7 +207,7 @@ function showDetectionBadge(types) {
   // Use cached native DOM methods to avoid conflicts with modified prototypes
   let badge;
   try {
-    badge = nativeCreateElement.call(document, 'div');
+    badge = nativeCreateElement('div');
   } catch (error) {
     badge = document.createElement('div');
   }
@@ -290,13 +302,33 @@ if (document.readyState === 'loading') {
   detectPageType();
 }
 
-// Re-detect on SPA navigation
+// Re-detect on SPA navigation (observe document, not body, so it always works)
 let lastUrl = location.href;
-new MutationObserver(() => {
-  const url = location.href;
-  if (url !== lastUrl) {
-    lastUrl = url;
-    setTimeout(detectPageType, 1000);
+let urlObserver = null;
+
+function setupUrlObserver() {
+  if (urlObserver) return; // Already set up
+  
+  try {
+    urlObserver = new MutationObserver(() => {
+      const url = location.href;
+      if (url !== lastUrl) {
+        lastUrl = url;
+        setTimeout(detectPageType, 1000);
+      }
+    });
+    
+    // Observe document instead of body - document always exists
+    urlObserver.observe(document, { subtree: true, childList: true });
+  } catch (error) {
+    console.warn('Failed to setup URL observer:', error);
   }
-}).observe(document, { subtree: true, childList: true });
+}
+
+// Set up observer when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupUrlObserver, { once: true });
+} else {
+  setupUrlObserver();
+}
 

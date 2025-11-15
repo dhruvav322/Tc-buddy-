@@ -3,9 +3,16 @@
  * Detects and can auto-decline cookie banners
  */
 
-// Cache native DOM methods before websites can modify them
-const nativeCreateElement = Document.prototype.createElement;
-const nativeAppendChild = Node.prototype.appendChild;
+// Cache native DOM methods before websites can modify them (use shared namespace to avoid conflicts)
+if (typeof window.PrivacyGuardNative === 'undefined') {
+  window.PrivacyGuardNative = {
+    createElement: Document.prototype.createElement,
+    appendChild: Node.prototype.appendChild,
+  };
+}
+// Use var to allow redeclaration across multiple content scripts
+var nativeCreateElement = window.PrivacyGuardNative.createElement.bind(document);
+var nativeAppendChild = window.PrivacyGuardNative.appendChild;
 
 let bannerDetected = false;
 
@@ -18,6 +25,7 @@ async function detectBanners() {
   if (banners.length > 0 && !bannerDetected) {
     bannerDetected = true;
     
+    // Notify background script (fire and forget - no response needed)
     chrome.runtime.sendMessage({
       type: 'COOKIE_BANNER_DETECTED',
       payload: {
@@ -25,6 +33,8 @@ async function detectBanners() {
         framework: banners[0].framework,
         hasDeclineButton: findDeclineButtonsLocal(banners[0].element).length > 0,
       },
+    }).catch(() => {
+      // Ignore errors - this is just a notification
     });
 
     // Show overlay option
@@ -94,7 +104,7 @@ async function showBannerOverlay(banner) {
   // Show manual option - use cached native DOM methods
   let overlay;
   try {
-    overlay = nativeCreateElement.call(document, 'div');
+    overlay = nativeCreateElement('div');
   } catch (error) {
     overlay = document.createElement('div');
   }
@@ -156,15 +166,60 @@ if (document.readyState === 'loading') {
   detectBanners();
 }
 
-// Re-detect on dynamic content
-const observer = new MutationObserver(() => {
-  if (!bannerDetected) {
-    detectBanners().catch(err => console.error('Banner detection error:', err));
+// Re-detect on dynamic content (wait for body to exist)
+function setupObserver() {
+  // Wait for body to exist
+  if (!document.body) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupObserver, { once: true });
+    } else {
+      // Document already loaded but body not ready, retry
+      setTimeout(setupObserver, 50);
+    }
+    return;
   }
-});
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true,
-});
+  // Double-check body is actually a Node
+  if (!(document.body instanceof Node)) {
+    console.warn('document.body is not a valid Node, retrying...');
+    setTimeout(setupObserver, 100);
+    return;
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!bannerDetected && document.body) {
+      detectBanners().catch(err => console.error('Banner detection error:', err));
+    }
+  });
+
+  try {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  } catch (error) {
+    console.warn('Failed to setup banner observer:', error);
+    // Retry once after a delay
+    setTimeout(() => {
+      if (document.body instanceof Node) {
+        try {
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+          });
+        } catch (retryError) {
+          console.warn('Retry failed:', retryError);
+        }
+      }
+    }, 500);
+  }
+}
+
+// Wait for DOM to be ready before setting up observer
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupObserver, { once: true });
+} else {
+  // DOM already loaded, set up observer immediately
+  setupObserver();
+}
 

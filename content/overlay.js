@@ -3,9 +3,16 @@
  * Shows quick actions and analysis preview
  */
 
-// Cache native DOM methods before websites can modify them
-const nativeCreateElement = Document.prototype.createElement;
-const nativeAppendChild = Node.prototype.appendChild;
+// Cache native DOM methods before websites can modify them (use shared namespace to avoid conflicts)
+if (typeof window.PrivacyGuardNative === 'undefined') {
+  window.PrivacyGuardNative = {
+    createElement: Document.prototype.createElement,
+    appendChild: Node.prototype.appendChild,
+  };
+}
+// Use var to allow redeclaration across multiple content scripts
+var nativeCreateElement = window.PrivacyGuardNative.createElement.bind(document);
+var nativeAppendChild = window.PrivacyGuardNative.appendChild;
 
 let overlayVisible = false;
 
@@ -17,7 +24,7 @@ function createOverlay() {
   // Use cached native DOM methods (captured before website code runs)
   let overlay;
   try {
-    overlay = nativeCreateElement.call(document, 'div');
+    overlay = nativeCreateElement('div');
   } catch (error) {
     // Fallback if native method fails
     overlay = document.createElement('div');
@@ -95,13 +102,17 @@ function showOverlay(analysis) {
 
     // Add button handlers
     content.querySelector('[data-action="view-details"]').addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'OPEN_POPUP' });
+      chrome.runtime.sendMessage({ type: 'OPEN_POPUP' }).catch(() => {
+        // Ignore errors
+      });
     });
 
     content.querySelector('[data-action="block-trackers"]').addEventListener('click', () => {
       chrome.runtime.sendMessage({
         type: 'BLOCK_TRACKERS',
         payload: { enabled: true },
+      }).catch(() => {
+        // Ignore errors
       });
     });
   }
@@ -136,6 +147,10 @@ function toggleOverlay() {
         text: document.body?.textContent || '',
       },
     }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn('Analysis request failed:', chrome.runtime.lastError.message);
+        return;
+      }
       if (response?.success) {
         showOverlay(response);
       }

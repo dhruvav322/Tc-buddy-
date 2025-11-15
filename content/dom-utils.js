@@ -3,13 +3,23 @@
  * Provides safe DOM manipulation that works even when websites modify prototypes
  */
 
-// Cache native DOM methods before they can be modified
-const nativeCreateElement = Document.prototype.createElement;
-const nativeAppendChild = Node.prototype.appendChild;
-const nativeInsertBefore = Node.prototype.insertBefore;
-const nativeRemoveChild = Node.prototype.removeChild;
-const nativeQuerySelector = Document.prototype.querySelector;
-const nativeQuerySelectorAll = Document.prototype.querySelectorAll;
+// Cache native DOM methods before they can be modified (use shared namespace to avoid conflicts)
+if (typeof window.PrivacyGuardNative === 'undefined') {
+  window.PrivacyGuardNative = {
+    createElement: Document.prototype.createElement,
+    appendChild: Node.prototype.appendChild,
+    insertBefore: Node.prototype.insertBefore,
+    removeChild: Node.prototype.removeChild,
+    querySelector: Document.prototype.querySelector,
+    querySelectorAll: Document.prototype.querySelectorAll,
+  };
+}
+const nativeCreateElement = window.PrivacyGuardNative.createElement;
+const nativeAppendChild = window.PrivacyGuardNative.appendChild;
+const nativeInsertBefore = window.PrivacyGuardNative.insertBefore;
+const nativeRemoveChild = window.PrivacyGuardNative.removeChild;
+const nativeQuerySelector = window.PrivacyGuardNative.querySelector;
+const nativeQuerySelectorAll = window.PrivacyGuardNative.querySelectorAll;
 
 /**
  * Safe createElement - uses native method even if prototype is modified

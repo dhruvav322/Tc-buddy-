@@ -67,6 +67,7 @@
     <div class="popup-content">
       <!-- Summary Tab -->
       <div id="tab-summary" class="tab-content active" role="tabpanel" aria-labelledby="tab-summary">
+        <div id="analysisSourceBadge" class="analysis-source-badge hidden"></div>
         <div class="tab-section">
           <h2 class="section-title">TL;DR</h2>
           <p id="tldrText" class="tldr-text">Click "Analyze This Page" to get started.</p>
@@ -193,7 +194,7 @@
             </label>
             <label class="setting-label">
               <input type="radio" name="analysisMode" value="hybrid" class="setting-radio" checked>
-              <span>Hybrid Mode (recommended)</span>
+              <span>Hybrid Mode (AI if configured, else Local)</span>
             </label>
           </div>
         </div>

@@ -3,6 +3,48 @@
  * Main background script for Manifest V3
  */
 
+// CRITICAL: Register message listener FIRST, before any imports
+// This ensures the listener is always available, even during module loading
+let handlersReady = false;
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Always respond immediately, even during initialization
+  try {
+    if (!handlersReady) {
+      console.log('Message received before handlers ready:', message.type);
+      // For TEST messages, respond immediately to wake up the service worker
+      if (message.type === 'TEST') {
+        const result = sendResponse({ 
+          success: true, 
+          message: 'Service worker is initializing',
+          timestamp: Date.now()
+        });
+        return result !== false;
+      }
+      // For other messages, queue them for processing once handlers are ready
+      // But still respond to prevent Chrome error dialog
+      const result = sendResponse({ 
+        success: false, 
+        error: 'Service worker still initializing. Please wait a moment and try again.',
+        retry: true
+      });
+      return result !== false;
+    }
+    // Once handlers are ready, use the main handler
+    return mainMessageHandler(message, sender, sendResponse);
+  } catch (error) {
+    // Channel already closed or error sending response
+    console.warn('Error in message listener:', error);
+    try {
+      sendResponse({ success: false, error: error.message });
+    } catch (e) {
+      // Channel closed, ignore
+    }
+    return false;
+  }
+});
+
+// Now import modules (listener is already registered above)
 import { analyzeDocument, analyzeCookies } from './analyzer.js';
 import { initializeBlocking, enableTrackerBlocking, disableTrackerBlocking, blockNonEssentialCookies, autoDeclineCookies } from './blocker.js';
 import { APIManager } from '../lib/api-manager.js';
@@ -37,28 +79,16 @@ if (typeof self !== 'undefined') {
 // Log that service worker is loading
 console.log('Privacy Guard service worker loading...');
 
-// Register message listener IMMEDIATELY to ensure we always respond
-// This prevents "connection error" even if imports fail
-let handlersReady = false;
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // If handlers aren't ready yet, respond with a helpful message
-  if (!handlersReady) {
-    console.log('Message received before handlers ready:', message.type);
-    sendResponse({ 
-      success: false, 
-      error: 'Service worker still initializing. Please wait a moment and try again.',
-      retry: true
-    });
-    return true;
-  }
-  // Once handlers are ready, use the main handler
-  return mainMessageHandler(message, sender, sendResponse);
-});
-
 // Initialize on install
 chrome.runtime.onInstalled.addListener(async (details) => {
   try {
     console.log('onInstalled triggered:', details.reason);
+    
+    // CRITICAL: Mark handlers as ready BEFORE opening onboarding
+    // This ensures service worker is ready when user tries to use extension
+    handlersReady = true;
+    console.log('✅ Service worker ready for onboarding');
+    
     if (details.reason === 'install') {
       // Set default preferences
       await chrome.storage.local.set({
@@ -68,6 +98,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         analysisMode: 'hybrid',
         preferredApiProvider: 'auto',
       });
+
+      // Small delay to ensure service worker is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Open onboarding page
       try {
@@ -297,27 +330,49 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 // Helper to safely send response with timeout protection
 function safeSendResponse(sendResponse, response, timeout = 25000) {
+  if (!sendResponse) {
+    console.warn('sendResponse is not available');
+    return;
+  }
+
   let responded = false;
-  const timeoutId = setTimeout(() => {
+  let timeoutId = null;
+  
+  // Set up timeout
+  timeoutId = setTimeout(() => {
     if (!responded) {
       responded = true;
       try {
-        sendResponse({ success: false, error: 'Response timeout' });
+        const result = sendResponse({ success: false, error: 'Response timeout' });
+        if (result === false) {
+          // Channel already closed, that's fine
+        }
       } catch (e) {
-        // Channel already closed, ignore
+        // Channel already closed, ignore silently
       }
     }
   }, timeout);
   
   try {
-    sendResponse(response);
+    // Try to send response immediately
+    const result = sendResponse(response);
     responded = true;
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
+    
+    // If sendResponse returns false, the channel is already closed
+    // This is expected in some cases (e.g., page navigated away)
+    if (result === false) {
+      // Channel closed - this is fine, don't log as error
+    }
   } catch (error) {
+    // Channel is closed or sendResponse threw an error
     if (!responded) {
-      clearTimeout(timeoutId);
-      // Channel might be closed, but we tried
-      console.warn('Could not send response:', error);
+      if (timeoutId) clearTimeout(timeoutId);
+      // This is expected if the channel closes (e.g., page navigated)
+      // Only log unexpected errors
+      if (error && error.message && !error.message.includes('closed') && !error.message.includes('Extension context invalidated')) {
+        console.warn('Could not send response:', error.message);
+      }
     }
   }
 }
@@ -432,5 +487,9 @@ function mainMessageHandler(message, sender, sendResponse) {
 }
 
 // Mark handlers as ready (this happens after all handler functions are defined)
-handlersReady = true;
+// Note: This might be set earlier in onInstalled, but that's fine - it ensures readiness
+if (!handlersReady) {
+  handlersReady = true;
+  console.log('✅ Service worker fully initialized and ready');
+}
 
