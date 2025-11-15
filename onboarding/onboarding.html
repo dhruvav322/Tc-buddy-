@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Privacy Guard</title>
+  <link rel="stylesheet" href="../tailwind.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .onboarding-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      color: #1e293b;
+      box-shadow: 0 20px 25px rgba(0,0,0,0.1);
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    .step-icon {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .step-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .step-description {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 24px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    .progress-bar {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 2px;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #6366f1;
+      transition: width 0.3s;
+    }
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    .feature-list li {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .feature-icon {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="onboarding-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 25%"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="step active" id="step1">
+      <div class="step-icon">🛡️</div>
+      <h1 class="step-title">Welcome to Privacy Guard!</h1>
+      <p class="step-description">
+        Privacy Guard helps you understand and control your online privacy. 
+        Analyze Terms & Conditions, detect trackers, and protect your data.
+      </p>
+      <button class="btn btn-primary" id="step1Btn">Get Started</button>
+    </div>
+
+    <!-- Step 2: Features -->
+    <div class="step" id="step2">
+      <div class="step-icon">✨</div>
+      <h1 class="step-title">Key Features</h1>
+      <ul class="feature-list">
+        <li>
+          <span class="feature-icon">🔍</span>
+          <span>AI-powered analysis of Terms & Privacy Policies</span>
+        </li>
+        <li>
+          <span class="feature-icon">🍪</span>
+          <span>Detect and block tracking cookies</span>
+        </li>
+        <li>
+          <span class="feature-icon">⚠️</span>
+          <span>Identify privacy red flags automatically</span>
+        </li>
+        <li>
+          <span class="feature-icon">📊</span>
+          <span>Privacy score and risk assessment</span>
+        </li>
+      </ul>
+      <button class="btn btn-primary" id="step2Btn">Continue</button>
+    </div>
+
+    <!-- Step 3: Analysis Mode -->
+    <div class="step" id="step3">
+      <div class="step-icon">⚙️</div>
+      <h1 class="step-title">Choose Analysis Mode</h1>
+      <p class="step-description">
+        How would you like Privacy Guard to analyze pages?
+      </p>
+      <div style="margin: 24px 0;">
+        <label style="display: block; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="radio" name="analysisMode" value="hybrid" checked style="margin-right: 8px;">
+          <strong>Hybrid Mode</strong> (Recommended)
+          <div style="font-size: 14px; color: #64748b; margin-top: 4px;">
+            Quick local scan + AI for complex cases
+          </div>
+        </label>
+        <label style="display: block; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="radio" name="analysisMode" value="local" style="margin-right: 8px;">
+          <strong>Local Mode</strong>
+          <div style="font-size: 14px; color: #64748b; margin-top: 4px;">
+            Fast heuristic analysis (no API needed)
+          </div>
+        </label>
+        <label style="display: block; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="radio" name="analysisMode" value="ai" style="margin-right: 8px;">
+          <strong>AI Mode</strong>
+          <div style="font-size: 14px; color: #64748b; margin-top: 4px;">
+            Deep AI analysis (requires API key)
+          </div>
+        </label>
+      </div>
+      <button class="btn btn-primary" id="step3Btn">Continue</button>
+    </div>
+
+    <!-- Step 4: Privacy Preferences -->
+    <div class="step" id="step4">
+      <div class="step-icon">🔒</div>
+      <h1 class="step-title">Privacy Preferences</h1>
+      <p class="step-description">
+        Configure how Privacy Guard protects you:
+      </p>
+      <div style="margin: 24px 0;">
+        <label style="display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" id="blockTrackers" checked style="margin-right: 12px; width: 20px; height: 20px;">
+          <span>Block known trackers automatically</span>
+        </label>
+        <label style="display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" id="blockCookies" style="margin-right: 12px; width: 20px; height: 20px;">
+          <span>Block non-essential cookies</span>
+        </label>
+        <label style="display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" id="autoDecline" style="margin-right: 12px; width: 20px; height: 20px;">
+          <span>Auto-decline cookie banners</span>
+        </label>
+      </div>
+      <button class="btn btn-primary" id="step4Btn">Finish Setup</button>
+    </div>
+
+    <!-- Step 5: Complete -->
+    <div class="step" id="step5">
+      <div class="step-icon">🎉</div>
+      <h1 class="step-title">You're All Set!</h1>
+      <p class="step-description">
+        Privacy Guard is ready to protect your privacy. 
+        Click the extension icon to get started analyzing pages.
+      </p>
+      <button class="btn btn-primary" id="step5Btn">Start Using Privacy Guard</button>
+    </div>
+  </div>
+
+  <script src="onboarding.js"></script>
+</body>
+</html>
+

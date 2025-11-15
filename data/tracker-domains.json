@@ -1,0 +1,52 @@
+{
+  "analytics": [
+    "google-analytics.com",
+    "googletagmanager.com",
+    "googleadservices.com",
+    "doubleclick.net",
+    "googlesyndication.com",
+    "analytics.google.com",
+    "ga.js",
+    "analytics.js",
+    "gtag.js"
+  ],
+  "advertising": [
+    "facebook.com",
+    "facebook.net",
+    "fbcdn.net",
+    "ads.facebook.com",
+    "advertising.com",
+    "adnxs.com",
+    "adsrvr.org",
+    "adtechus.com",
+    "advertising.com",
+    "amazon-adsystem.com",
+    "amazon-adsystem.com",
+    "advertising.amazon.com"
+  ],
+  "social": [
+    "twitter.com",
+    "twimg.com",
+    "linkedin.com",
+    "pinterest.com",
+    "instagram.com",
+    "tiktok.com",
+    "snapchat.com"
+  ],
+  "fingerprinting": [
+    "fingerprintjs.com",
+    "fingerprint2.com",
+    "deviceatlas.com",
+    "bluecava.com"
+  ],
+  "data_collection": [
+    "segment.com",
+    "mixpanel.com",
+    "amplitude.com",
+    "hotjar.com",
+    "fullstory.com",
+    "logrocket.com",
+    "sentry.io"
+  ]
+}
+

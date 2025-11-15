@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Guard</title>
+  <link rel="stylesheet" href="../tailwind.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="popup-body">
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="popup-header-content">
+        <div class="popup-logo">
+          <span class="popup-logo-icon" aria-hidden="true">🛡️</span>
+          <div>
+            <h1 class="popup-title">Privacy Guard</h1>
+            <p class="popup-subtitle">Protect your privacy online</p>
+          </div>
+        </div>
+        <div id="riskBadge" class="risk-badge risk-unknown" role="status" aria-live="polite">
+          Ready
+        </div>
+      </div>
+    </header>
+
+    <!-- Quick Stats -->
+    <section class="popup-stats" id="quickStats" aria-label="Quick statistics">
+      <div class="stat-item">
+        <div class="stat-value" id="trackerCount">-</div>
+        <div class="stat-label">Trackers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="cookieCount">-</div>
+        <div class="stat-label">Cookies</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="privacyScore">-</div>
+        <div class="stat-label">Privacy Score</div>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <nav class="popup-tabs" role="tablist" aria-label="Main navigation">
+      <button class="tab-button active" data-tab="summary" role="tab" aria-selected="true" aria-controls="tab-summary">
+        Summary
+      </button>
+      <button class="tab-button" data-tab="details" role="tab" aria-selected="false" aria-controls="tab-details">
+        Details
+      </button>
+      <button class="tab-button" data-tab="cookies" role="tab" aria-selected="false" aria-controls="tab-cookies">
+        Cookies
+      </button>
+      <button class="tab-button" data-tab="history" role="tab" aria-selected="false" aria-controls="tab-history">
+        History
+      </button>
+      <button class="tab-button" data-tab="dashboard" role="tab" aria-selected="false" aria-controls="tab-dashboard">
+        Dashboard
+      </button>
+      <button class="tab-button" data-tab="settings" role="tab" aria-selected="false" aria-controls="tab-settings">
+        Settings
+      </button>
+    </nav>
+
+    <!-- Tab Content -->
+    <div class="popup-content">
+      <!-- Summary Tab -->
+      <div id="tab-summary" class="tab-content active" role="tabpanel" aria-labelledby="tab-summary">
+        <div class="tab-section">
+          <h2 class="section-title">TL;DR</h2>
+          <p id="tldrText" class="tldr-text">Click "Analyze This Page" to get started.</p>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Key Points</h2>
+          <ul id="bulletsList" class="bullets-list"></ul>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Risk Assessment</h2>
+          <div id="riskDetails" class="risk-details"></div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="analyzeBtn" class="btn-primary">Analyze This Page</button>
+          <button id="blockTrackersBtn" class="btn-secondary">Block All Trackers</button>
+          <button id="autoDeclineBtn" class="btn-secondary">Auto-Decline Cookies</button>
+        </div>
+      </div>
+
+      <!-- Details Tab -->
+      <div id="tab-details" class="tab-content" role="tabpanel" aria-labelledby="tab-details">
+        <div class="tab-section">
+          <h2 class="section-title">Full Analysis</h2>
+          <div id="fullAnalysis" class="full-analysis"></div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Red Flags</h2>
+          <div id="redFlagsGrid" class="red-flags-grid"></div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="highlightBtn" class="btn-secondary">Highlight on Page</button>
+          <button id="exportBtn" class="btn-secondary">Export Report (PDF)</button>
+        </div>
+      </div>
+
+      <!-- Cookies Tab -->
+      <div id="tab-cookies" class="tab-content" role="tabpanel" aria-labelledby="tab-cookies">
+        <div class="tab-section">
+          <h2 class="section-title">Cookie Breakdown</h2>
+          <div id="cookieBreakdown" class="cookie-breakdown"></div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Third-Party Trackers</h2>
+          <div id="trackersList" class="trackers-list"></div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="blockCookiesBtn" class="btn-primary">Block Non-Essential Cookies</button>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="tab-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history">
+        <div class="tab-section">
+          <h2 class="section-title">Analysis History</h2>
+          <div id="historyList" class="history-list"></div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="clearHistoryBtn" class="btn-secondary">Clear History</button>
+        </div>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="tab-content" role="tabpanel" aria-labelledby="tab-dashboard">
+        <div class="tab-section">
+          <h2 class="section-title">Privacy Dashboard</h2>
+          <div class="dashboard-stats">
+            <div class="dashboard-stat-card">
+              <div class="dashboard-stat-value" id="dashboardTotalSites">0</div>
+              <div class="dashboard-stat-label">Sites Analyzed</div>
+            </div>
+            <div class="dashboard-stat-card">
+              <div class="dashboard-stat-value" id="dashboardAvgScore">0</div>
+              <div class="dashboard-stat-label">Avg Privacy Score</div>
+            </div>
+            <div class="dashboard-stat-card">
+              <div class="dashboard-stat-value" id="dashboardTrackersBlocked">0</div>
+              <div class="dashboard-stat-label">Trackers Blocked</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Risk Distribution</h2>
+          <div id="riskChart" class="chart-container">
+            <canvas id="riskChartCanvas" width="540" height="300"></canvas>
+          </div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Privacy Score Trend</h2>
+          <div id="scoreChart" class="chart-container">
+            <canvas id="scoreChartCanvas" width="540" height="250"></canvas>
+          </div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Cookie Categories Blocked</h2>
+          <div id="cookieChart" class="chart-container">
+            <canvas id="cookieChartCanvas" width="540" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings">
+        <div class="tab-section">
+          <h2 class="section-title">Analysis Mode</h2>
+          <div class="setting-item">
+            <label class="setting-label">
+              <input type="radio" name="analysisMode" value="ai" class="setting-radio">
+              <span>AI Mode (requires API key)</span>
+            </label>
+            <label class="setting-label">
+              <input type="radio" name="analysisMode" value="local" class="setting-radio">
+              <span>Local Mode (heuristics only)</span>
+            </label>
+            <label class="setting-label">
+              <input type="radio" name="analysisMode" value="hybrid" class="setting-radio" checked>
+              <span>Hybrid Mode (recommended)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">API Configuration</h2>
+          <div class="setting-item">
+            <label for="apiProvider" class="setting-label-text">API Provider</label>
+            <select id="apiProvider" class="setting-select">
+              <option value="auto">Auto (with fallback)</option>
+              <option value="deepseek">Deepseek</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label for="deepseekKey" class="setting-label-text">Deepseek API Key</label>
+            <input type="password" id="deepseekKey" class="setting-input" placeholder="sk-...">
+            <button id="saveDeepseekKey" class="btn-secondary">Save</button>
+          </div>
+
+          <div class="setting-item">
+            <label for="openaiKey" class="setting-label-text">OpenAI API Key</label>
+            <input type="password" id="openaiKey" class="setting-input" placeholder="sk-...">
+            <button id="saveOpenAIKey" class="btn-secondary">Save</button>
+          </div>
+        </div>
+
+        <div class="tab-section">
+          <h2 class="section-title">Privacy Preferences</h2>
+          <div class="setting-item">
+            <label class="setting-toggle">
+              <input type="checkbox" id="blockTrackersToggle" class="setting-checkbox">
+              <span>Block known trackers automatically</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label class="setting-toggle">
+              <input type="checkbox" id="blockCookiesToggle" class="setting-checkbox">
+              <span>Block non-essential cookies</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label class="setting-toggle">
+              <input type="checkbox" id="autoDeclineToggle" class="setting-checkbox">
+              <span>Auto-decline cookie banners</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="openOptionsBtn" class="btn-primary">Open Full Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Analyzing page...</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <p class="footer-text">⚠️ This is not legal advice. Always consult a lawyer for legal matters.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
+

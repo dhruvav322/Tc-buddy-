@@ -1,0 +1,254 @@
+/* Privacy Guard Content Script Styles */
+
+.privacy-guard-badge {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #ffffff;
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.privacy-guard-badge-icon {
+  font-size: 20px;
+}
+
+.privacy-guard-badge-text {
+  color: #334155;
+}
+
+.privacy-guard-badge-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.privacy-guard-badge-close:hover {
+  background-color: #f1f5f9;
+}
+
+.privacy-guard-highlight {
+  background-color: #fef3c7 !important;
+  padding: 2px 4px !important;
+  border-radius: 2px !important;
+  cursor: help !important;
+  position: relative !important;
+}
+
+.privacy-guard-highlight:hover {
+  background-color: #fde68a !important;
+}
+
+.privacy-guard-banner-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #ffffff;
+  border: 2px solid #ef4444;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10001;
+  max-width: 300px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.privacy-guard-banner-overlay-content p {
+  margin: 0 0 12px 0;
+  color: #334155;
+  font-size: 14px;
+}
+
+.privacy-guard-banner-overlay-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.privacy-guard-btn-decline,
+.privacy-guard-btn-dismiss {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.privacy-guard-btn-decline {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.privacy-guard-btn-decline:hover {
+  background: #dc2626;
+}
+
+.privacy-guard-btn-dismiss {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.privacy-guard-btn-dismiss:hover {
+  background: #e2e8f0;
+}
+
+.privacy-guard-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 10002;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  pointer-events: none;
+}
+
+.privacy-guard-overlay.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.privacy-guard-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.privacy-guard-overlay-icon {
+  font-size: 20px;
+}
+
+.privacy-guard-overlay-title {
+  flex: 1;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 16px;
+}
+
+.privacy-guard-overlay-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.privacy-guard-overlay-close:hover {
+  background-color: #f1f5f9;
+}
+
+.privacy-guard-overlay-content {
+  padding: 16px;
+}
+
+.privacy-guard-overlay-loading {
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.privacy-guard-overlay-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.privacy-guard-overlay-risk {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.privacy-guard-overlay-risk.risk-safe {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.privacy-guard-overlay-risk.risk-watch {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.privacy-guard-overlay-risk.risk-risky {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.privacy-guard-overlay-tldr {
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.privacy-guard-overlay-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.privacy-guard-overlay-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.privacy-guard-overlay-btn:hover {
+  background: #4f46e5;
+}
+

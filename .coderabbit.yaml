@@ -1,0 +1,59 @@
+# CodeRabbit Configuration for Privacy Guard
+
+language: javascript
+review_status: active
+
+# Review settings
+review:
+  # Review all files
+  paths:
+    - "**/*.js"
+    - "**/*.json"
+    - "**/*.html"
+    - "**/*.css"
+  
+  # Focus areas
+  focus:
+    - security
+    - performance
+    - privacy
+    - error-handling
+    - code-quality
+    - accessibility
+
+# Ignore patterns
+ignore:
+  - "node_modules/**"
+  - "*.min.js"
+  - "dist/**"
+  - "build/**"
+
+# Code quality rules
+rules:
+  - name: "No console.log in production"
+    pattern: "console\\.log"
+    severity: warning
+    message: "Remove console.log statements before production"
+  
+  - name: "Error handling required"
+    pattern: "async function|function.*await"
+    severity: info
+    message: "Ensure async functions have proper error handling"
+  
+  - name: "API key security"
+    pattern: "apiKey|API_KEY|api_key"
+    severity: critical
+    message: "Verify API keys are stored securely and never logged"
+
+# Security checks
+security:
+  - check_api_keys: true
+  - check_secrets: true
+  - check_permissions: true
+
+# Performance checks
+performance:
+  - check_large_files: true
+  - check_inefficient_loops: true
+  - check_memory_leaks: true
+

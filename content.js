@@ -1,6 +1,10 @@
 /**
- * Extract visible text from the current document by gathering text nodes.
- * Limits to the first ~15k characters to keep payloads manageable.
+ * Legacy content script - kept for backward compatibility
+ * New content scripts are in content/ directory
+ */
+
+/**
+ * Extract visible text from the current document
  */
 function extractVisibleText() {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -26,7 +30,7 @@ function extractVisibleText() {
 }
 
 /**
- * Skip script/style nodes and hidden content ancestors.
+ * Skip script/style nodes and hidden content
  */
 function shouldSkipNode(node) {
   const parent = node.parentElement;
@@ -43,6 +47,7 @@ function shouldSkipNode(node) {
   return style && (style.display === 'none' || style.visibility === 'hidden');
 }
 
+// Listen for extract requests
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === 'EXTRACT_TEXT') {
     try {
@@ -51,5 +56,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } catch (error) {
       sendResponse({ success: false, error: error.message });
     }
+    return true;
   }
+  
+  return false;
 });

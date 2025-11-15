@@ -1,0 +1,79 @@
+{
+  "auto_renewal": {
+    "keywords": ["auto-renew", "automatic renewal", "recurring subscription", "renews automatically", "auto-renewal", "continuous service"],
+    "severity": "medium"
+  },
+  "no_refunds": {
+    "keywords": ["no refund", "non-refundable", "all sales final", "refunds not available", "no returns"],
+    "severity": "high"
+  },
+  "hidden_fees": {
+    "keywords": ["additional fee", "processing fee", "service fee", "handling fee", "convenience fee", "transaction fee"],
+    "severity": "medium"
+  },
+  "arbitration": {
+    "keywords": ["binding arbitration", "arbitration", "class action waiver", "waive right to jury", "mandatory arbitration"],
+    "severity": "high"
+  },
+  "data_sharing": {
+    "keywords": ["share your data", "third parties", "affiliates", "partners may receive", "data sharing", "sell your data"],
+    "severity": "high"
+  },
+  "data_selling": {
+    "keywords": ["sell your data", "monetize data", "data broker", "sell information", "data revenue"],
+    "severity": "critical"
+  },
+  "mandatory_account": {
+    "keywords": ["must create an account", "account required", "registration required", "mandatory registration"],
+    "severity": "low"
+  },
+  "broad_license": {
+    "keywords": ["perpetual license", "irrevocable license", "worldwide license", "unlimited license", "exclusive license"],
+    "severity": "medium"
+  },
+  "tracking_cookies": {
+    "keywords": ["tracking cookies", "cookies to track", "analytics cookies", "advertising cookies"],
+    "severity": "medium"
+  },
+  "targeted_advertising": {
+    "keywords": ["targeted advertising", "personalized ads", "behavioral advertising", "interest-based ads"],
+    "severity": "medium"
+  },
+  "profile_building": {
+    "keywords": ["profile building", "user profiling", "create profile", "behavioral profile"],
+    "severity": "high"
+  },
+  "location_tracking": {
+    "keywords": ["location tracking", "geolocation", "track location", "location data"],
+    "severity": "high"
+  },
+  "biometric_data": {
+    "keywords": ["biometric data", "facial recognition", "fingerprint", "voice recognition", "biometric information"],
+    "severity": "critical"
+  },
+  "ai_training": {
+    "keywords": ["train ai", "machine learning", "ai model", "train algorithms", "improve ai"],
+    "severity": "high"
+  },
+  "indefinite_retention": {
+    "keywords": ["indefinite retention", "retain indefinitely", "no deletion", "permanent storage"],
+    "severity": "high"
+  },
+  "data_transfer": {
+    "keywords": ["transfer data", "data outside", "international transfer", "cross-border"],
+    "severity": "medium"
+  },
+  "vague_partners": {
+    "keywords": ["trusted partners", "selected partners", "third-party partners", "service partners"],
+    "severity": "medium"
+  },
+  "auto_updates": {
+    "keywords": ["terms may change", "update terms", "modify terms", "change without notice"],
+    "severity": "low"
+  },
+  "no_deletion": {
+    "keywords": ["cannot delete", "no deletion right", "retain after deletion", "archived data"],
+    "severity": "high"
+  }
+}
+

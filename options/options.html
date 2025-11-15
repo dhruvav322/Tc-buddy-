@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Guard - Settings</title>
+  <link rel="stylesheet" href="../tailwind.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .settings-section {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .settings-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .settings-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .setting-group {
+      margin-bottom: 24px;
+    }
+    .setting-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+    .setting-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .setting-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .setting-toggle input {
+      width: 20px;
+      height: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-section">
+    <h1 class="settings-title">Privacy Guard Settings</h1>
+    <p class="settings-subtitle">Configure your privacy protection preferences</p>
+
+    <div class="setting-group">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Analysis Mode</h2>
+      <label class="setting-toggle">
+        <input type="radio" name="analysisMode" value="ai">
+        <span>AI Mode - Uses AI for detailed analysis (requires API key)</span>
+      </label>
+      <label class="setting-toggle">
+        <input type="radio" name="analysisMode" value="local">
+        <span>Local Mode - Fast heuristic-based analysis (no API needed)</span>
+      </label>
+      <label class="setting-toggle">
+        <input type="radio" name="analysisMode" value="hybrid" checked>
+        <span>Hybrid Mode - Quick local scan, AI for complex cases (recommended)</span>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">API Configuration</h2>
+      <label class="setting-label">Preferred API Provider</label>
+      <select id="apiProvider" class="setting-input">
+        <option value="auto">Auto (with fallback)</option>
+        <option value="deepseek">Deepseek</option>
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic Claude</option>
+        <option value="gemini">Google Gemini</option>
+      </select>
+
+      <label class="setting-label" style="margin-top: 16px;">Deepseek API Key</label>
+      <input type="password" id="deepseekKey" class="setting-input" placeholder="sk-...">
+      <button id="saveDeepseek" class="btn btn-secondary" style="margin-top: 8px;">Save</button>
+
+      <label class="setting-label" style="margin-top: 16px;">OpenAI API Key</label>
+      <input type="password" id="openaiKey" class="setting-input" placeholder="sk-...">
+      <button id="saveOpenAI" class="btn btn-secondary" style="margin-top: 8px;">Save</button>
+
+      <label class="setting-label" style="margin-top: 16px;">Anthropic API Key</label>
+      <input type="password" id="anthropicKey" class="setting-input" placeholder="sk-ant-...">
+      <button id="saveAnthropic" class="btn btn-secondary" style="margin-top: 8px;">Save</button>
+
+      <label class="setting-label" style="margin-top: 16px;">Gemini API Key</label>
+      <input type="password" id="geminiKey" class="setting-input" placeholder="AIza...">
+      <button id="saveGemini" class="btn btn-secondary" style="margin-top: 8px;">Save</button>
+    </div>
+
+    <div class="setting-group">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Privacy Preferences</h2>
+      <label class="setting-toggle">
+        <input type="checkbox" id="blockTrackers">
+        <span>Block known trackers automatically</span>
+      </label>
+      <label class="setting-toggle">
+        <input type="checkbox" id="blockCookies">
+        <span>Block non-essential cookies</span>
+      </label>
+      <label class="setting-toggle">
+        <input type="checkbox" id="autoDecline">
+        <span>Auto-decline cookie banners when possible</span>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Data Management</h2>
+      <button id="clearCache" class="btn btn-secondary">Clear Analysis Cache</button>
+      <button id="clearHistory" class="btn btn-secondary" style="margin-left: 8px;">Clear History</button>
+      <button id="exportData" class="btn btn-secondary" style="margin-left: 8px;">Export Data</button>
+    </div>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+      <p style="font-size: 12px; color: #64748b;">
+        ⚠️ Privacy Guard does not collect or transmit your personal data. All analysis is performed locally or through your configured API keys. API keys are stored securely in your browser and never shared.
+      </p>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
+

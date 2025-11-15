@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Privacy Guard Icons</title>
+</head>
+<body>
+  <h1>Privacy Guard Icon Generator</h1>
+  <p>Open this file in a browser and right-click each icon to save it.</p>
+  
+  <canvas id="icon16" width="16" height="16"></canvas>
+  <canvas id="icon32" width="32" height="32"></canvas>
+  <canvas id="icon48" width="48" height="48"></canvas>
+  <canvas id="icon128" width="128" height="128"></canvas>
+
+  <script>
+    function createIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Background
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Shield shape
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      const margin = size / 8;
+      ctx.moveTo(size / 2, margin);
+      ctx.lineTo(size - margin, margin + size / 4);
+      ctx.lineTo(size - margin, size - margin);
+      ctx.lineTo(size / 2, size - margin / 2);
+      ctx.lineTo(margin, size - margin);
+      ctx.lineTo(margin, margin + size / 4);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Add "PG" text for larger icons
+      if (size >= 32) {
+        ctx.fillStyle = '#6366f1';
+        ctx.font = `bold ${size / 3}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PG', size / 2, size / 2);
+      }
+      
+      // Make downloadable
+      canvas.style.border = '1px solid #ccc';
+      canvas.style.margin = '10px';
+      canvas.style.cursor = 'pointer';
+      canvas.title = `Right-click to save as icon${size}.png`;
+      
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const link = document.createElement('a');
+        link.download = `icon${size}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+    
+    createIcon('icon16', 16);
+    createIcon('icon32', 32);
+    createIcon('icon48', 48);
+    createIcon('icon128', 128);
+    
+    document.body.insertAdjacentHTML('beforeend', '<p><strong>Instructions:</strong> Right-click each icon above and save as icon16.png, icon32.png, icon48.png, and icon128.png in the assets/icons/ folder.</p>');
+  </script>
+</body>
+</html>
+

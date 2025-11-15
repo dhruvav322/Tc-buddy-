@@ -1,0 +1,39 @@
+{
+  "essential": {
+    "name": "Essential",
+    "description": "Required for basic site functionality",
+    "color": "#10b981",
+    "blockable": false
+  },
+  "functional": {
+    "name": "Functional",
+    "description": "Enhance user experience",
+    "color": "#3b82f6",
+    "blockable": true
+  },
+  "analytics": {
+    "name": "Analytics",
+    "description": "Track site usage and performance",
+    "color": "#f59e0b",
+    "blockable": true
+  },
+  "marketing": {
+    "name": "Marketing",
+    "description": "Used for advertising and targeting",
+    "color": "#ef4444",
+    "blockable": true
+  },
+  "advertising": {
+    "name": "Advertising",
+    "description": "Third-party advertising cookies",
+    "color": "#dc2626",
+    "blockable": true
+  },
+  "unknown": {
+    "name": "Unknown",
+    "description": "Uncategorized cookies",
+    "color": "#6b7280",
+    "blockable": true
+  }
+}
+
