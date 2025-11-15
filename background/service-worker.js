@@ -46,8 +46,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Now import modules (listener is already registered above)
 import { analyzeDocument, analyzeCookies } from './analyzer.js';
-import { initializeBlocking, enableTrackerBlocking, disableTrackerBlocking, blockNonEssentialCookies, autoDeclineCookies } from './blocker.js';
+import { initializeBlocking, enableTrackerBlocking, disableTrackerBlocking, blockNonEssentialCookies as runCookieBlocker, autoDeclineCookies as runAutoDecline } from './blocker.js';
 import { APIManager } from '../lib/api-manager.js';
+import { logActivity } from '../lib/activity-log.js';
 
 // Initialize API manager lazily (not at module level to avoid initialization errors)
 let apiManager = null;
@@ -63,6 +64,49 @@ function getAPIManager() {
     }
   }
   return apiManager;
+}
+
+function normalizeDomain(domain) {
+  if (!domain) return '';
+  try {
+    return domain.toLowerCase();
+  } catch (_e) {
+    return (domain || '').trim().toLowerCase();
+  }
+}
+
+function domainMatchesCriticalList(domain, list = []) {
+  const normalized = normalizeDomain(domain);
+  if (!normalized) return false;
+  return list.some((entry) => {
+    const normalizedEntry = normalizeDomain(entry);
+    return normalized === normalizedEntry || normalized.endsWith(`.${normalizedEntry}`);
+  });
+}
+
+async function shouldAllowAutomation(action, domain, { force = false } = {}) {
+  const normalizedDomain = normalizeDomain(domain);
+  if (!normalizedDomain) {
+    return { allowed: true };
+  }
+
+  const { autoDeclineConfirmations = true, criticalSiteList = [] } = await chrome.storage.local.get([
+    'autoDeclineConfirmations',
+    'criticalSiteList',
+  ]);
+
+  const isCritical = domainMatchesCriticalList(normalizedDomain, criticalSiteList);
+
+  if (isCritical && autoDeclineConfirmations && !force) {
+    await logActivity('automation_blocked', { action, domain: normalizedDomain, reason: 'critical_site' });
+    return { allowed: false, reason: 'critical_site', domain: normalizedDomain };
+  }
+
+  if (isCritical && force) {
+    await logActivity('automation_forced', { action, domain: normalizedDomain });
+  }
+
+  return { allowed: true, domain: normalizedDomain };
 }
 
 // Error handler for uncaught errors (only in service worker context)
@@ -95,6 +139,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         blockTrackers: false,
         blockNonEssentialCookies: false,
         autoDeclineCookies: false,
+        autoDeclineConfirmations: true,
+        enforceNoNetworkMode: false,
+        criticalSiteList: [],
         analysisMode: 'hybrid',
         preferredApiProvider: 'auto',
       });
@@ -197,24 +244,61 @@ async function handleBlockTrackers(payload) {
  * Handle cookie blocking request
  */
 async function handleBlockCookies(payload) {
-  const { enabled, domain } = payload;
+  const { enabled, domain, force = false } = payload;
   await chrome.storage.local.set({ blockNonEssentialCookies: enabled });
-  
-  if (enabled && domain && blockNonEssentialCookies) {
-    await blockNonEssentialCookies(domain);
+
+  if (!enabled || !domain) {
+    return { allowed: true };
   }
+
+  const guard = await shouldAllowAutomation('block_cookies', domain, { force });
+  if (!guard.allowed) {
+    return { allowed: false, reason: guard.reason, domain: guard.domain };
+  }
+
+  if (runCookieBlocker) {
+    try {
+      await runCookieBlocker(domain);
+      await logActivity('automation_run', { action: 'block_cookies', domain: guard.domain || normalizeDomain(domain) });
+    } catch (error) {
+      console.error('Failed to run cookie blocker:', error);
+      throw error;
+    }
+  }
+
+  return { allowed: true };
 }
 
 /**
  * Handle auto-decline cookies request
  */
 async function handleAutoDeclineCookies(payload) {
-  const { tabId } = payload;
-  if (autoDeclineCookies) {
-    await autoDeclineCookies(tabId);
+  const { tabId, force = false } = payload;
+  if (!tabId) {
+    throw new Error('Tab ID required');
+  }
+
+  let domain = '';
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    domain = new URL(tab.url).hostname;
+  } catch (error) {
+    console.warn('Unable to resolve tab domain for auto-decline:', error);
+  }
+
+  const guard = await shouldAllowAutomation('auto_decline', domain, { force });
+  if (!guard.allowed) {
+    return { allowed: false, reason: guard.reason, domain: guard.domain };
+  }
+
+  if (runAutoDecline) {
+    await runAutoDecline(tabId);
+    await logActivity('automation_run', { action: 'auto_decline', domain: guard.domain || normalizeDomain(domain) });
   } else {
     console.warn('autoDeclineCookies not available');
   }
+
+  return { allowed: true };
 }
 
 /**

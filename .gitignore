@@ -60,15 +60,15 @@ docs/_build/
 *.bak
 *.backup
 
-# Old/unused files
-background.js
-popup.js
-popup.html
-tailwind.css
-manifest-firefox.json
-test-connection.html
-CHECK_API_SETTINGS.js
-background/service-worker-simple.js
+# Old/unused files (kept for archival, but currently need to inspect in IDE)
+# background.js
+# popup.js
+# popup.html
+# tailwind.css
+# manifest-firefox.json
+# test-connection.html
+# CHECK_API_SETTINGS.js
+# background/service-worker-simple.js
 
 # Debug/documentation files (keep only README.md and DISTRIBUTION.md)
 *.md

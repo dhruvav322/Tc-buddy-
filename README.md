@@ -246,11 +246,32 @@ Privacy Guard is designed with privacy as a core principle:
 
 - ✅ All analysis runs locally or through your configured API keys
 - ✅ No data collection or tracking
-- ✅ API keys stored securely in browser storage
-- ✅ No external analytics
+- ✅ API keys encrypted using AES-GCM (Web Crypto API)
+- ✅ No external analytics or telemetry
 - ✅ Open source and auditable
 - ✅ No personal information transmitted
 - ✅ Works offline (local mode)
+- ✅ Rate limiting prevents API abuse (10 req/min per provider)
+- ✅ Cache expires after 24 hours automatically
+- ✅ Content Security Policy prevents injection attacks
+
+### Why We Need Permissions
+
+- **activeTab**: Read page content for analysis
+- **storage**: Save settings and API keys (encrypted)
+- **scripting**: Inject content scripts for detection
+- **cookies**: Analyze cookie privacy implications
+- **tabs**: Detect page types and navigation
+- **declarativeNetRequest**: Block trackers (optional)
+- **host_permissions (`<all_urls>`)**: Analyze any website you visit
+
+**Note**: We need broad permissions to work on any website, but we never transmit your data. All processing is local or via your own API keys.
+
+### Security Reporting
+
+Found a security issue? Please report it responsibly:
+- See [SECURITY.md](SECURITY.md) for details
+- **DO NOT** post security issues publicly
 
 ## 🛠️ Development
 

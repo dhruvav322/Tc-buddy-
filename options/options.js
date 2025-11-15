@@ -1,3 +1,5 @@
+import { saveSecret, hasSecret } from '../lib/secure-storage.js';
+
 /**
  * Privacy Guard Options Page Script
  */
@@ -11,14 +13,16 @@ async function loadSettings() {
   const settings = await chrome.storage.local.get([
     'analysisMode',
     'preferredApiProvider',
-    'deepseekApiKey',
-    'openaiApiKey',
-    'anthropicApiKey',
-    'geminiApiKey',
     'blockTrackers',
     'blockNonEssentialCookies',
     'autoDeclineCookies',
+    'autoDeclineConfirmations',
+    'enforceNoNetworkMode',
+    'criticalSiteList',
   ]);
+
+  const criticalSites = settings.criticalSiteList || [];
+  renderCriticalSites(criticalSites);
 
   // Analysis mode
   if (settings.analysisMode) {
@@ -30,24 +34,51 @@ async function loadSettings() {
     document.getElementById('apiProvider').value = settings.preferredApiProvider;
   }
 
-  // API keys (masked)
-  if (settings.deepseekApiKey) {
-    document.getElementById('deepseekKey').value = maskKey(settings.deepseekApiKey);
-  }
-  if (settings.openaiApiKey) {
-    document.getElementById('openaiKey').value = maskKey(settings.openaiApiKey);
-  }
-  if (settings.anthropicApiKey) {
-    document.getElementById('anthropicKey').value = maskKey(settings.anthropicApiKey);
-  }
-  if (settings.geminiApiKey) {
-    document.getElementById('geminiKey').value = maskKey(settings.geminiApiKey);
-  }
+  // API keys (masked via availability flag)
+  await hydrateApiKeyField('deepseekKey', 'deepseekApiKey');
+  await hydrateApiKeyField('openaiKey', 'openaiApiKey');
+  await hydrateApiKeyField('anthropicKey', 'anthropicApiKey');
+  await hydrateApiKeyField('geminiKey', 'geminiApiKey');
 
   // Toggles
   document.getElementById('blockTrackers').checked = settings.blockTrackers || false;
   document.getElementById('blockCookies').checked = settings.blockNonEssentialCookies || false;
   document.getElementById('autoDecline').checked = settings.autoDeclineCookies || false;
+  document.getElementById('autoDeclineConfirmations').checked = settings.autoDeclineConfirmations ?? true;
+  document.getElementById('enforceNoNetworkMode').checked = settings.enforceNoNetworkMode || false;
+}
+
+async function hydrateApiKeyField(inputId, storageKey) {
+  const hasKey = await hasSecret(storageKey);
+  const input = document.getElementById(inputId);
+  if (hasKey) {
+    input.dataset.hasValue = 'true';
+    input.value = '••••••••';
+  } else {
+    input.dataset.hasValue = 'false';
+    input.value = '';
+  }
+}
+
+function renderCriticalSites(list) {
+  const container = document.getElementById('criticalSiteList');
+  container.innerHTML = '';
+  if (!Array.isArray(list) || list.length === 0) {
+    const empty = document.createElement('p');
+    empty.textContent = 'No protected domains yet.';
+    empty.style.color = '#64748b';
+    container.appendChild(empty);
+    return;
+  }
+  list.forEach(domain => {
+    const chip = document.createElement('div');
+    chip.className = 'domain-chip';
+    chip.innerHTML = `
+      <span>${domain}</span>
+      <button type="button" data-domain="${domain}" aria-label="Remove ${domain}">✕</button>
+    `;
+    container.appendChild(chip);
+  });
 }
 
 function maskKey(key) {
@@ -71,113 +102,10 @@ function setupEventListeners() {
   });
 
   // API keys
-  document.getElementById('saveDeepseek').addEventListener('click', async () => {
-    const key = document.getElementById('deepseekKey').value.trim();
-    if (!key) {
-      showNotification('Please enter an API key', 'error');
-      return;
-    }
-    if (key.includes('...')) {
-      showNotification('Please enter a new API key (not the masked version)', 'error');
-      return;
-    }
-    try {
-      await chrome.storage.local.set({ deepseekApiKey: key });
-      showNotification('✅ Deepseek API key saved successfully');
-      console.log('✅ Deepseek API key saved');
-      // Verify it was saved
-      const saved = await chrome.storage.local.get('deepseekApiKey');
-      console.log('🔍 Verifying save - key exists:', !!saved.deepseekApiKey);
-    } catch (error) {
-      console.error('❌ Failed to save Deepseek API key:', error);
-      showNotification('Failed to save API key: ' + error.message, 'error');
-    }
-  });
-
-  document.getElementById('saveOpenAI').addEventListener('click', async () => {
-    const key = document.getElementById('openaiKey').value.trim();
-    if (!key) {
-      showNotification('Please enter an API key', 'error');
-      return;
-    }
-    if (key.includes('...')) {
-      showNotification('Please enter a new API key (not the masked version)', 'error');
-      return;
-    }
-    try {
-      await chrome.storage.local.set({ openaiApiKey: key });
-      // Verify it was actually saved
-      const saved = await chrome.storage.local.get('openaiApiKey');
-      if (saved.openaiApiKey && saved.openaiApiKey === key) {
-        showNotification('✅ OpenAI API key saved successfully');
-        console.log('✅ OpenAI API key saved');
-        console.log('🔍 Verifying save - key exists:', true);
-      } else {
-        console.error('❌ Verification failed - key not found in storage');
-        showNotification('⚠️ Save may have failed - key not verified', 'error');
-      }
-    } catch (error) {
-      console.error('❌ Failed to save OpenAI API key:', error);
-      showNotification('Failed to save API key: ' + error.message, 'error');
-    }
-  });
-
-  document.getElementById('saveAnthropic').addEventListener('click', async () => {
-    const key = document.getElementById('anthropicKey').value.trim();
-    if (!key) {
-      showNotification('Please enter an API key', 'error');
-      return;
-    }
-    if (key.includes('...')) {
-      showNotification('Please enter a new API key (not the masked version)', 'error');
-      return;
-    }
-    try {
-      await chrome.storage.local.set({ anthropicApiKey: key });
-      // Verify it was actually saved
-      const saved = await chrome.storage.local.get('anthropicApiKey');
-      if (saved.anthropicApiKey && saved.anthropicApiKey === key) {
-        showNotification('✅ Anthropic API key saved successfully');
-        console.log('✅ Anthropic API key saved');
-        console.log('🔍 Verifying save - key exists:', true);
-      } else {
-        console.error('❌ Verification failed - key not found in storage');
-        showNotification('⚠️ Save may have failed - key not verified', 'error');
-      }
-    } catch (error) {
-      console.error('❌ Failed to save Anthropic API key:', error);
-      showNotification('Failed to save API key: ' + error.message, 'error');
-    }
-  });
-
-  document.getElementById('saveGemini').addEventListener('click', async () => {
-    const key = document.getElementById('geminiKey').value.trim();
-    if (!key) {
-      showNotification('Please enter an API key', 'error');
-      return;
-    }
-    if (key.includes('...')) {
-      showNotification('Please enter a new API key (not the masked version)', 'error');
-      return;
-    }
-    try {
-      await chrome.storage.local.set({ geminiApiKey: key });
-      // Verify it was actually saved
-      const saved = await chrome.storage.local.get('geminiApiKey');
-      if (saved.geminiApiKey && saved.geminiApiKey === key) {
-        showNotification('✅ Gemini API key saved successfully');
-        console.log('✅ Gemini API key saved');
-        console.log('🔍 Verifying save - key exists:', true);
-        console.log('🔍 Key preview:', saved.geminiApiKey.substring(0, 10) + '...');
-      } else {
-        console.error('❌ Verification failed - key not found in storage');
-        showNotification('⚠️ Save may have failed - key not verified', 'error');
-      }
-    } catch (error) {
-      console.error('❌ Failed to save Gemini API key:', error);
-      showNotification('Failed to save API key: ' + error.message, 'error');
-    }
-  });
+  setupSecureKeySaver('saveDeepseek', 'deepseekKey', 'deepseekApiKey', 'Deepseek');
+  setupSecureKeySaver('saveOpenAI', 'openaiKey', 'openaiApiKey', 'OpenAI');
+  setupSecureKeySaver('saveAnthropic', 'anthropicKey', 'anthropicApiKey', 'Anthropic');
+  setupSecureKeySaver('saveGemini', 'geminiKey', 'geminiApiKey', 'Gemini');
 
   // Privacy preferences
   document.getElementById('blockTrackers').addEventListener('change', (e) => {
@@ -197,6 +125,47 @@ function setupEventListeners() {
   document.getElementById('autoDecline').addEventListener('change', (e) => {
     chrome.storage.local.set({ autoDeclineCookies: e.target.checked });
     showNotification('Auto-decline ' + (e.target.checked ? 'enabled' : 'disabled'));
+  });
+
+  document.getElementById('autoDeclineConfirmations').addEventListener('change', (e) => {
+    chrome.storage.local.set({ autoDeclineConfirmations: e.target.checked });
+    showNotification('Confirmation prompts ' + (e.target.checked ? 'enabled' : 'disabled'));
+  });
+
+  document.getElementById('enforceNoNetworkMode').addEventListener('change', (e) => {
+    chrome.storage.local.set({ enforceNoNetworkMode: e.target.checked });
+    showNotification('No-network mode ' + (e.target.checked ? 'locked to local' : 'allows AI'));
+  });
+
+  document.getElementById('addCriticalDomain').addEventListener('click', async () => {
+    const input = document.getElementById('criticalDomainInput');
+    const domain = sanitizeDomain(input.value);
+    if (!domain) {
+      showNotification('Enter a valid domain', 'error');
+      return;
+    }
+    const { criticalSiteList = [] } = await chrome.storage.local.get('criticalSiteList');
+    if (criticalSiteList.includes(domain)) {
+      showNotification('Domain already protected', 'error');
+      return;
+    }
+    const updated = [...criticalSiteList, domain];
+    await chrome.storage.local.set({ criticalSiteList: updated });
+    renderCriticalSites(updated);
+    input.value = '';
+    showNotification('Domain protected');
+  });
+
+  document.getElementById('criticalSiteList').addEventListener('click', async (event) => {
+    const target = event.target;
+    if (target.tagName === 'BUTTON' && target.dataset.domain) {
+      const domain = target.dataset.domain;
+      const { criticalSiteList = [] } = await chrome.storage.local.get('criticalSiteList');
+      const updated = criticalSiteList.filter(item => item !== domain);
+      await chrome.storage.local.set({ criticalSiteList: updated });
+      renderCriticalSites(updated);
+      showNotification(`Removed ${domain}`);
+    }
   });
 
   // Data management
@@ -224,6 +193,57 @@ function setupEventListeners() {
     a.click();
     URL.revokeObjectURL(url);
     showNotification('Data exported');
+  });
+
+  document.getElementById('exportActivityLog').addEventListener('click', async () => {
+    const { privacyGuardActivityLog = [] } = await chrome.storage.local.get('privacyGuardActivityLog');
+    const blob = new Blob([JSON.stringify(privacyGuardActivityLog, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `privacy-guard-activity-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Activity log exported');
+  });
+}
+
+function sanitizeDomain(value) {
+  const trimmed = (value || '').trim().toLowerCase();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
+    return url.hostname;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function setupSecureKeySaver(buttonId, inputId, storageKey, label) {
+  const button = document.getElementById(buttonId);
+  button.addEventListener('click', async () => {
+    const input = document.getElementById(inputId);
+    const key = input.value.trim();
+    if (!key) {
+      await saveSecret(storageKey, '');
+      input.dataset.hasValue = 'false';
+      input.value = '';
+      showNotification(`${label} key cleared`);
+      return;
+    }
+    if (key === '••••••••') {
+      showNotification('Please enter a new API key (not the placeholder)', 'error');
+      return;
+    }
+    try {
+      await saveSecret(storageKey, key);
+      input.dataset.hasValue = 'true';
+      input.value = '••••••••';
+      showNotification(`✅ ${label} API key saved securely`);
+    } catch (error) {
+      console.error(`Failed to save ${label} key`, error);
+      showNotification('Failed to save API key: ' + error.message, 'error');
+    }
   });
 }
 

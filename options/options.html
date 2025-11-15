@@ -82,6 +82,37 @@
     .btn-secondary:hover {
       background: #e2e8f0;
     }
+    .critical-domain-input {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .critical-domain-input input {
+      flex: 1;
+    }
+    .domain-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 36px;
+    }
+    .domain-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      font-size: 13px;
+      color: #1e293b;
+    }
+    .domain-chip button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
@@ -147,6 +178,26 @@
         <input type="checkbox" id="autoDecline">
         <span>Auto-decline cookie banners when possible</span>
       </label>
+      <label class="setting-toggle">
+        <input type="checkbox" id="autoDeclineConfirmations" checked>
+        <span>Require confirmation before automation on protected sites</span>
+      </label>
+      <label class="setting-toggle">
+        <input type="checkbox" id="enforceNoNetworkMode">
+        <span>No-Network Mode &mdash; force local analysis (never call APIs)</span>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Protected Sites</h2>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">
+        Mark banking, medical, or other sensitive domains to always require confirmation before automated actions.
+      </p>
+      <div class="critical-domain-input">
+        <input type="text" id="criticalDomainInput" class="setting-input" placeholder="example.com">
+        <button id="addCriticalDomain" class="btn btn-secondary" type="button">Add</button>
+      </div>
+      <div id="criticalSiteList" class="domain-chip-list" aria-live="polite"></div>
     </div>
 
     <div class="setting-group">
@@ -154,6 +205,7 @@
       <button id="clearCache" class="btn btn-secondary">Clear Analysis Cache</button>
       <button id="clearHistory" class="btn btn-secondary" style="margin-left: 8px;">Clear History</button>
       <button id="exportData" class="btn btn-secondary" style="margin-left: 8px;">Export Data</button>
+      <button id="exportActivityLog" class="btn btn-secondary" style="margin-left: 8px;">Export Activity Log</button>
     </div>
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
@@ -163,7 +215,7 @@
     </div>
   </div>
 
-  <script src="options.js"></script>
+  <script type="module" src="options.js"></script>
 </body>
 </html>
 

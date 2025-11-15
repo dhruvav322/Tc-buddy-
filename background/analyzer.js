@@ -6,6 +6,7 @@
 import { APIManager } from '../lib/api-manager.js';
 import { getCachedAnalysis, setCachedAnalysis } from './cache.js';
 import { analyzeWithHeuristics } from '../lib/heuristics.js';
+import { enforceRateLimit } from '../lib/rate-limiter.js';
 
 // Initialize API manager lazily to avoid initialization errors
 let apiManager = null;
@@ -66,26 +67,38 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
     throw new Error('Invalid document: URL and at least 50 characters of text required');
   }
 
+  const { enforceNoNetworkMode = false } = await chrome.storage.local.get('enforceNoNetworkMode');
+  const originalMode = mode;
+  let effectiveMode = mode;
+  let effectiveProvider = provider;
+  let forcedLocal = false;
+
+  if (enforceNoNetworkMode) {
+    effectiveMode = 'local';
+    effectiveProvider = 'local';
+    forcedLocal = originalMode !== 'local';
+  }
+
   // Check cache first, but only if mode matches (don't use cached local result for AI mode)
   const cached = await getCachedAnalysis(url);
-  if (cached && cached.mode === mode && cached.provider === provider) {
-    console.log('📦 Using cached result (mode:', mode, ', provider:', provider, ')');
+  if (cached && cached.mode === effectiveMode && cached.provider === effectiveProvider) {
+    console.log('📦 Using cached result (mode:', effectiveMode, ', provider:', effectiveProvider, ')');
     return { ...cached, source: 'cache' };
   } else if (cached) {
-    console.log('🔄 Cache mismatch - mode:', cached.mode, 'vs', mode, ', provider:', cached.provider, 'vs', provider);
+    console.log('🔄 Cache mismatch - mode:', cached.mode, 'vs', effectiveMode, ', provider:', cached.provider, 'vs', effectiveProvider);
     console.log('🔄 Getting fresh analysis...');
   }
 
   let result;
 
   // Hybrid mode: Use AI if configured, otherwise use local (no confusing switching)
-  if (mode === 'hybrid') {
-    const hasApiConfigured = await checkApiConfigured(provider);
+  if (effectiveMode === 'hybrid') {
+    const hasApiConfigured = await checkApiConfigured(effectiveProvider);
     
     if (hasApiConfigured) {
       console.log('🤖 Hybrid mode: Using AI analysis (API configured)');
       try {
-        result = await analyzeWithAI(text, provider);
+        result = await analyzeWithAI(text, effectiveProvider);
       } catch (error) {
         console.warn('AI analysis failed, falling back to local:', error);
         result = await analyzeLocally(text);
@@ -95,12 +108,12 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
       console.log('📍 Hybrid mode: Using local analysis (API not configured)');
       result = await analyzeLocally(text);
     }
-  } else if (mode === 'ai') {
+  } else if (effectiveMode === 'ai') {
     console.log('🤖 AI mode: Using API analysis');
-    console.log('🔍 Checking API configuration for provider:', provider);
+    console.log('🔍 Checking API configuration for provider:', effectiveProvider);
     
     // Check if API is configured before attempting
-    const hasApiConfigured = await checkApiConfigured(provider);
+    const hasApiConfigured = await checkApiConfigured(effectiveProvider);
     console.log('🔑 API configured:', hasApiConfigured);
     
     if (!hasApiConfigured) {
@@ -116,7 +129,9 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
     } else {
       try {
         console.log('🚀 Starting AI analysis...');
-        result = await analyzeWithAI(text, provider);
+        // Enforce rate limiting before API call
+        enforceRateLimit(effectiveProvider);
+        result = await analyzeWithAI(text, effectiveProvider);
         console.log('✅ AI analysis completed successfully');
         console.log('📊 Result provider:', result.provider);
       } catch (error) {
@@ -136,8 +151,8 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
   // Enhance with additional metadata
   result.url = url;
   result.analyzed_at = new Date().toISOString();
-  result.mode = mode;
-  
+  result.mode = effectiveMode;
+
   // Set source based on actual provider used, not just mode
   // If provider name contains "Local" or "Heuristics", it's local analysis
   const actualSource = (result.provider && (result.provider.includes('Local') || result.provider.includes('Heuristics'))) 
@@ -146,7 +161,12 @@ export async function analyzeDocument({ url, text, mode = 'hybrid', provider = '
   result.source = actualSource;
 
   // Cache result
-  await setCachedAnalysis(url, result);
+  if (forcedLocal) {
+    const warning = 'No-network mode is enabled. Analysis used local heuristics only.';
+    result.warning = result.warning ? `${result.warning} ${warning}` : warning;
+  }
+
+  await setCachedAnalysis(url, { ...result, mode: effectiveMode, provider: result.provider || effectiveProvider });
 
   return result;
 }
