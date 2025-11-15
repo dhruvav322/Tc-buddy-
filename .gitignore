@@ -70,9 +70,11 @@ docs/_build/
 # CHECK_API_SETTINGS.js
 # background/service-worker-simple.js
 
-# Debug/documentation files (keep only README.md and DISTRIBUTION.md)
+# Debug/documentation files (keep only README.md, DISTRIBUTION.md, SECURITY.md, SECURITY_AUDIT.md)
 *.md
 !README.md
 !DISTRIBUTION.md
+!SECURITY.md
+!SECURITY_AUDIT.md
 !assets/icons/README.md
 
