@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Guard</title>
+  <link rel="stylesheet" href="popup-modern.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">🛡️</span>
+          <span class="logo-text">Privacy Guard</span>
+        </div>
+        <div class="header-actions">
+          <span id="riskBadge" class="badge badge-neutral">Ready</span>
+          <button id="themeToggle" class="icon-btn" aria-label="Toggle theme">
+            <svg class="theme-icon sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="theme-icon moon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+          <button id="menuBtn" class="icon-btn" aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Initial State - Before Analysis -->
+      <div id="initialView" class="view">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h2 class="empty-title">Analyze This Page</h2>
+          <p class="empty-text">Get instant privacy insights about this website's terms and policies</p>
+          
+          <button id="analyzeBtn" class="btn btn-primary btn-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            Start Analysis
+          </button>
+
+          <!-- Quick Stats (if available) -->
+          <div id="quickStats" class="quick-stats">
+            <div class="stat-item">
+              <span class="stat-value" id="trackerCount">-</span>
+              <span class="stat-label">Trackers</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="cookieCount">-</span>
+              <span class="stat-label">Cookies</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="privacyScoreQuick">-</span>
+              <span class="stat-label">Score</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Results View -->
+      <div id="resultsView" class="view hidden">
+        <!-- Analysis Source Badge -->
+        <div id="analysisSourceBadge" class="source-badge hidden">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span id="sourceBadgeText">AI Analysis</span>
+        </div>
+
+        <!-- Privacy Score Card -->
+        <div class="score-card">
+          <div class="score-circle">
+            <svg class="score-ring" width="120" height="120">
+              <circle cx="60" cy="60" r="54" stroke="var(--border)" stroke-width="8" fill="none"/>
+              <circle id="scoreProgress" cx="60" cy="60" r="54" stroke="var(--primary)" stroke-width="8" fill="none"
+                style="stroke-dasharray: 339.292; stroke-dashoffset: 169.646; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+            </svg>
+            <div class="score-value">
+              <span id="privacyScore" class="score-number">--</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <div class="score-details">
+            <h3 class="score-title">Privacy Score</h3>
+            <p class="score-subtitle" id="riskText">Analyzing...</p>
+          </div>
+        </div>
+
+        <!-- TL;DR Section -->
+        <section class="card">
+          <h3 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Summary
+          </h3>
+          <p id="tldrText" class="card-text">Click "Start Analysis" to get insights</p>
+        </section>
+
+        <!-- Top Concerns (Expandable) -->
+        <section class="card" id="concernsCard">
+          <div class="card-header" id="concernsToggle">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Top Concerns
+              <span id="concernsCount" class="badge badge-warning">0</span>
+            </h3>
+            <svg class="expand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+          <div id="concernsList" class="concerns-list collapsed">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+        <!-- Key Points (Expandable) -->
+        <section class="card" id="keyPointsCard">
+          <div class="card-header" id="keyPointsToggle">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              Key Points
+              <span id="keyPointsCount" class="badge badge-neutral">0</span>
+            </h3>
+            <svg class="expand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+          <ul id="bulletsList" class="bullets-list collapsed">
+            <!-- Populated by JS -->
+          </ul>
+        </section>
+
+        <!-- Quick Actions -->
+        <div class="actions-grid">
+          <button id="blockTrackersBtn" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+            Block Trackers
+          </button>
+          <button id="autoDeclineBtn" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Auto-Decline
+          </button>
+        </div>
+
+        <!-- See More Button -->
+        <button id="seeDetailsBtn" class="btn btn-ghost btn-full">
+          View Full Analysis
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingView" class="view hidden">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <h3 class="loading-title">Analyzing Page...</h3>
+          <p class="loading-text">This may take a few seconds</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-text">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        Not legal advice • Always consult a lawyer
+      </p>
+    </footer>
+
+    <!-- Side Menu (Drawer) -->
+    <div id="menuDrawer" class="drawer hidden">
+      <div class="drawer-overlay" id="drawerOverlay"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <h2 class="drawer-title">Menu</h2>
+          <button id="closeDrawer" class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="drawer-nav">
+          <a href="#" class="nav-item" id="navDashboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Dashboard
+          </a>
+          <a href="#" class="nav-item" id="navHistory">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            History
+          </a>
+          <a href="#" class="nav-item" id="navSettings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m6-12h-6m-6 0H1m12 12h6m-6 0H7"/>
+            </svg>
+            Settings
+          </a>
+          <div class="nav-divider"></div>
+          <a href="#" class="nav-item" id="navHelp">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Help & Support
+          </a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup-modern.js"></script>
+</body>
+</html>
+
