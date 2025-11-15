@@ -58,6 +58,12 @@ export async function callDeepseek(documentText) {
     throw new Error(`Deepseek API error: ${response.status} - ${errorText}`);
   }
 
+  // Validate Content-Type
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    throw new Error(`Unexpected Content-Type: ${contentType}`);
+  }
+
   const payload = await response.json();
   console.log('✅ Deepseek API response received');
   const content = payload?.choices?.[0]?.message?.content;
@@ -68,6 +74,13 @@ export async function callDeepseek(documentText) {
   try {
     const parsed = JSON.parse(content);
     console.log('✅ Deepseek response parsed successfully');
+    
+    // Validate response structure (import at top of file if using modules)
+    // For now, basic validation
+    if (!parsed.tldr || !parsed.bullets || !parsed.red_flags) {
+      console.warn('⚠️ Response missing required fields, using anyway');
+    }
+    
     return parsed;
   } catch (err) {
     console.error('❌ Failed to parse Deepseek response:', err);
