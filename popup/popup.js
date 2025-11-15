@@ -815,8 +815,17 @@ async function handleHighlight() {
     }
   } catch (error) {
     console.error('Highlight error:', error);
-    if (error.message && (error.message.includes('Could not establish connection') || 
-                          error.message.includes('Receiving end'))) {
+    const errorMsg = error.message || 'Unknown error';
+    
+    // Check if it's a page type issue (can't inject)
+    if (errorMsg.includes('Cannot inject') || errorMsg.includes('page type')) {
+      showError(errorMsg);
+      return;
+    }
+    
+    // Check if it's a connection issue (content script not ready)
+    if (errorMsg.includes('Could not establish connection') || 
+        errorMsg.includes('Receiving end')) {
       // Try to inject content script and retry
       try {
         await injectContentScript(currentTab.id);
@@ -832,10 +841,17 @@ async function handleHighlight() {
         }
       } catch (retryError) {
         console.error('Retry failed:', retryError);
+        // If injection failed, show the specific error
+        if (retryError.message && retryError.message.includes('Cannot inject')) {
+          showError(retryError.message);
+        } else {
+          showError('Content script not ready. Please refresh the page and try again.');
+        }
+        return;
       }
       showError('Content script not ready. Please refresh the page and try again.');
     } else {
-      showError('Failed to highlight: ' + error.message);
+      showError('Failed to highlight: ' + errorMsg);
     }
   }
 }
@@ -867,8 +883,19 @@ async function injectContentScript(tabId) {
     const tab = await chrome.tabs.get(tabId);
     const url = new URL(tab.url);
     
+    // Check page type and provide helpful error messages
     if (!['http:', 'https:'].includes(url.protocol)) {
-      throw new Error('Cannot inject content script on this page type');
+      let errorMsg = 'Cannot highlight on this page type. ';
+      
+      if (url.protocol === 'chrome:' || url.protocol === 'chrome-extension:') {
+        errorMsg += 'Highlighting only works on regular websites (http/https pages).';
+      } else if (url.protocol === 'file:') {
+        errorMsg += 'Highlighting does not work on local files. Please open the page in a web browser.';
+      } else {
+        errorMsg += `Highlighting only works on http/https pages, not ${url.protocol} pages.`;
+      }
+      
+      throw new Error(errorMsg);
     }
 
     // Inject the highlighter script
