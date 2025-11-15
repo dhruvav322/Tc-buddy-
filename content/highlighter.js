@@ -177,7 +177,11 @@ function highlightRedFlags(redFlags) {
 // Listen for highlight requests
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try {
-    if (message.type === 'HIGHLIGHT_TEXT') {
+    if (message.type === 'PING') {
+      // Respond to ping to confirm content script is ready
+      sendResponse({ success: true, ready: true });
+      return true;
+    } else if (message.type === 'HIGHLIGHT_TEXT') {
       highlightSnippets(message.payload?.snippets || []);
       sendResponse({ success: true });
       return true;

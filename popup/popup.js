@@ -794,6 +794,9 @@ async function handleHighlight() {
   }
 
   try {
+    // Check if content script is ready, if not, inject it
+    await ensureContentScriptReady(currentTab.id);
+
     // First clear any existing highlights
     await chrome.tabs.sendMessage(currentTab.id, {
       type: 'CLEAR_HIGHLIGHTS'
@@ -812,11 +815,72 @@ async function handleHighlight() {
     }
   } catch (error) {
     console.error('Highlight error:', error);
-    if (error.message && error.message.includes('Could not establish connection')) {
+    if (error.message && (error.message.includes('Could not establish connection') || 
+                          error.message.includes('Receiving end'))) {
+      // Try to inject content script and retry
+      try {
+        await injectContentScript(currentTab.id);
+        // Retry after injection
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const response = await chrome.tabs.sendMessage(currentTab.id, {
+          type: 'HIGHLIGHT_RED_FLAGS',
+          payload: { redFlags: currentAnalysis.red_flags },
+        });
+        if (response && response.success) {
+          showNotification('Highlights applied to page', 'success');
+          return;
+        }
+      } catch (retryError) {
+        console.error('Retry failed:', retryError);
+      }
       showError('Content script not ready. Please refresh the page and try again.');
     } else {
       showError('Failed to highlight: ' + error.message);
     }
+  }
+}
+
+/**
+ * Ensure content script is ready, inject if needed
+ */
+async function ensureContentScriptReady(tabId) {
+  try {
+    // Try to ping the content script
+    await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+    return true;
+  } catch (error) {
+    // Content script not ready, try to inject
+    console.log('Content script not ready, attempting to inject...');
+    await injectContentScript(tabId);
+    // Wait a bit for script to load
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return true;
+  }
+}
+
+/**
+ * Inject content script if not already loaded
+ */
+async function injectContentScript(tabId) {
+  try {
+    // Check if we can inject (only works on http/https pages)
+    const tab = await chrome.tabs.get(tabId);
+    const url = new URL(tab.url);
+    
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Cannot inject content script on this page type');
+    }
+
+    // Inject the highlighter script
+    await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ['content/highlighter.js']
+    });
+    
+    console.log('Content script injected successfully');
+  } catch (error) {
+    console.error('Failed to inject content script:', error);
+    throw error;
   }
 }
 
