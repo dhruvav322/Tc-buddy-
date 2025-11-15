@@ -97,6 +97,24 @@ Detects 20+ privacy concerns including:
 
 ## 📦 Installation
 
+### Quick Install (Recommended)
+
+1. **Download the extension**:
+   - [Latest Release ZIP](https://github.com/dhruvav322/Tc-buddy-/releases/latest/download/privacy-guard-extension.zip)
+   - Or visit [Releases Page](https://github.com/dhruvav322/Tc-buddy-/releases/latest)
+
+2. **Extract the ZIP file** to a folder on your computer
+
+3. **Open your browser**:
+   - **Chrome/Edge/Brave**: Go to `chrome://extensions/`
+   - **Opera/Opera GX**: Go to `opera://extensions/`
+
+4. **Enable "Developer mode"** (toggle in top right)
+
+5. **Click "Load unpacked"** and select the extracted folder
+
+6. **Done!** The Privacy Guard icon should appear in your toolbar
+
 ### From Source
 
 1. Clone this repository:
@@ -105,16 +123,7 @@ git clone https://github.com/dhruvav322/Tc-buddy-.git
 cd tc-buddy-extension
 ```
 
-2. Open your browser and navigate to:
-   - **Chrome/Edge**: `chrome://extensions/`
-   - **Opera GX**: `opera://extensions/`
-   - **Brave**: `brave://extensions/`
-
-3. Enable "Developer mode" (toggle in top right)
-
-4. Click "Load unpacked" and select the extension directory
-
-5. The Privacy Guard icon should appear in your toolbar
+2. Follow steps 3-6 from Quick Install above
 
 ### Browser Compatibility
 

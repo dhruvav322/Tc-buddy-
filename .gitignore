@@ -70,8 +70,9 @@ test-connection.html
 CHECK_API_SETTINGS.js
 background/service-worker-simple.js
 
-# Debug/documentation files (keep only README.md)
+# Debug/documentation files (keep only README.md and DISTRIBUTION.md)
 *.md
 !README.md
+!DISTRIBUTION.md
 !assets/icons/README.md
 
