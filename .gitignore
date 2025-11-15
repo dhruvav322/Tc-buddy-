@@ -6,7 +6,11 @@ package-lock.json
 yarn.lock
 
 # Build outputs
-dist/
+# Allow dist folder but ignore ZIP files
+dist/*.zip
+!dist/index.html
+!dist/package-extension.sh
+!dist/.gitignore/
 build/
 *.zip
 *.crx

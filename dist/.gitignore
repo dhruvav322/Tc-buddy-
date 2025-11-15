@@ -1,0 +1,7 @@
+# Ignore the packaged ZIP file
+privacy-guard-extension.zip
+
+# But keep the script and HTML
+!package-extension.sh
+!index.html
+
