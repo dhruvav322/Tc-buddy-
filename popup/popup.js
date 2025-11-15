@@ -76,6 +76,22 @@ async function initialize() {
 
     // Setup tabs
     setupTabs();
+    
+    // Check if we should open to a specific tab (from modern UI)
+    const { openToTab, lastAnalysis } = await chrome.storage.local.get(['openToTab', 'lastAnalysis']);
+    if (openToTab) {
+      // Switch to the requested tab
+      switchTab(openToTab);
+      // Clear the flag
+      chrome.storage.local.remove('openToTab');
+      
+      // If we have analysis data, load it
+      if (lastAnalysis && openToTab === 'details') {
+        currentAnalysis = lastAnalysis;
+        displayAnalysis(lastAnalysis);
+        chrome.storage.local.remove('lastAnalysis');
+      }
+    }
   } catch (error) {
     console.error('Error initializing popup:', error);
     // Show error to user
@@ -166,31 +182,49 @@ function setupTabs() {
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
       const tabName = button.dataset.tab;
-
-      // Update buttons
-      tabButtons.forEach(btn => {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected', 'false');
-      });
-      button.classList.add('active');
-      button.setAttribute('aria-selected', 'true');
-
-      // Update content
-      tabContents.forEach(content => {
-        content.classList.remove('active');
-      });
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-
-      // Load tab-specific data
-      if (tabName === 'cookies') {
-        loadCookiesTab();
-      } else if (tabName === 'history') {
-        loadHistoryTab();
-      } else if (tabName === 'dashboard') {
-        loadDashboardTab();
-      }
+      switchTab(tabName);
     });
   });
+}
+
+/**
+ * Switch to a specific tab (can be called programmatically)
+ */
+function switchTab(tabName) {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const targetButton = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
+
+  if (!targetButton) {
+    console.warn(`Tab "${tabName}" not found`);
+    return;
+  }
+
+  // Update buttons
+  tabButtons.forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-selected', 'false');
+  });
+  targetButton.classList.add('active');
+  targetButton.setAttribute('aria-selected', 'true');
+
+  // Update content
+  tabContents.forEach(content => {
+    content.classList.remove('active');
+  });
+  const targetContent = document.getElementById(`tab-${tabName}`);
+  if (targetContent) {
+    targetContent.classList.add('active');
+  }
+
+  // Load tab-specific data
+  if (tabName === 'cookies') {
+    loadCookiesTab();
+  } else if (tabName === 'history') {
+    loadHistoryTab();
+  } else if (tabName === 'dashboard') {
+    loadDashboardTab();
+  }
 }
 
 async function loadSettings() {

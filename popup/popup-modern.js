@@ -110,14 +110,12 @@ function setupEventListeners() {
   // Navigation items
   document.getElementById('navDashboard').addEventListener('click', (e) => {
     e.preventDefault();
-    showNotification('Opening dashboard...', 'info');
-    // TODO: Open dashboard page
+    openDashboard();
   });
   
   document.getElementById('navHistory').addEventListener('click', (e) => {
     e.preventDefault();
-    showNotification('Opening history...', 'info');
-    // TODO: Show history
+    openHistory();
   });
   
   document.getElementById('navSettings').addEventListener('click', (e) => {
@@ -141,9 +139,9 @@ function setupEventListeners() {
   document.getElementById('concernsToggle').addEventListener('click', toggleSection);
   document.getElementById('keyPointsToggle').addEventListener('click', toggleSection);
   
-  // See details
+  // See details - open old popup with full analysis
   document.getElementById('seeDetailsBtn').addEventListener('click', () => {
-    showNotification('Full analysis view coming soon', 'info');
+    openFullAnalysis();
   });
 }
 
@@ -378,18 +376,42 @@ function formatConcernText(key) {
  */
 async function handleBlockTrackers() {
   try {
+    // Get current state
+    const { blockTrackers } = await chrome.storage.local.get('blockTrackers');
+    const newState = !blockTrackers;
+    
     const response = await chrome.runtime.sendMessage({
       type: 'BLOCK_TRACKERS',
-      payload: { enabled: true }
+      payload: { enabled: newState }
     });
     
-    if (response.success) {
-      showNotification('Trackers blocked successfully', 'success');
+    if (response && response.success) {
+      showNotification(
+        newState ? 'Trackers blocking enabled' : 'Trackers blocking disabled',
+        'success'
+      );
+      // Update button state
+      updateBlockTrackersButton(newState);
     } else {
-      throw new Error(response.error);
+      throw new Error(response?.error || 'Failed to toggle tracker blocking');
     }
   } catch (error) {
-    showNotification('Failed to block trackers', 'error');
+    console.error('Block trackers error:', error);
+    showNotification(error.message || 'Failed to block trackers', 'error');
+  }
+}
+
+/**
+ * Update block trackers button state
+ */
+function updateBlockTrackersButton(enabled) {
+  const btn = document.getElementById('blockTrackersBtn');
+  if (enabled) {
+    btn.classList.add('active');
+    btn.querySelector('svg').style.stroke = 'var(--success)';
+  } else {
+    btn.classList.remove('active');
+    btn.querySelector('svg').style.stroke = 'currentColor';
   }
 }
 
@@ -414,12 +436,123 @@ async function handleAutoDecline() {
 }
 
 /**
+ * Open full analysis view (switch to old popup)
+ */
+function openFullAnalysis() {
+  // Store current analysis data
+  if (currentAnalysis) {
+    chrome.storage.local.set({ 
+      lastAnalysis: currentAnalysis,
+      openToTab: 'details'
+    });
+  }
+  
+  // Open old popup in new window
+  chrome.windows.create({
+    url: chrome.runtime.getURL('popup/popup.html'),
+    type: 'popup',
+    width: 600,
+    height: 700
+  });
+  
+  // Close current popup
+  window.close();
+}
+
+/**
+ * Open dashboard (switch to old popup)
+ */
+function openDashboard() {
+  chrome.storage.local.set({ openToTab: 'dashboard' });
+  chrome.windows.create({
+    url: chrome.runtime.getURL('popup/popup.html'),
+    type: 'popup',
+    width: 600,
+    height: 700
+  });
+  window.close();
+}
+
+/**
+ * Open history (switch to old popup)
+ */
+function openHistory() {
+  chrome.storage.local.set({ openToTab: 'history' });
+  chrome.windows.create({
+    url: chrome.runtime.getURL('popup/popup.html'),
+    type: 'popup',
+    width: 600,
+    height: 700
+  });
+  window.close();
+}
+
+/**
  * Show notification
  */
 function showNotification(message, type = 'info') {
-  // Simple console log for now
-  // TODO: Implement toast notifications
-  console.log(`[${type.toUpperCase()}]`, message);
+  // Create toast notification
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  
+  // Add styles if not already added
+  if (!document.getElementById('toast-styles')) {
+    const styles = document.createElement('style');
+    styles.id = 'toast-styles';
+    styles.textContent = `
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10000;
+        animation: toast-slide-in 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-width: 90%;
+        text-align: center;
+      }
+      .toast-success {
+        background: var(--success, #22c55e);
+        color: white;
+      }
+      .toast-error {
+        background: var(--danger, #dc2626);
+        color: white;
+      }
+      .toast-info {
+        background: var(--primary, #6366f1);
+        color: white;
+      }
+      .toast-warning {
+        background: var(--warning, #f59e0b);
+        color: white;
+      }
+      @keyframes toast-slide-in {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(styles);
+  }
+  
+  document.body.appendChild(toast);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.animation = 'toast-slide-out 0.3s ease-in';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 /**
