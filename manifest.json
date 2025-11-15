@@ -45,7 +45,9 @@
         "content/detector.js",
         "content/banner-detector.js",
         "content/highlighter.js",
-        "content/overlay.js"
+        "content/overlay.js",
+        "content/cookie-banner-protector.js",
+        "content/page-risk-badge.js"
       ],
       "run_at": "document_start",
       "css": ["content/content.css"],

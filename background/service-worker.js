@@ -561,6 +561,28 @@ function mainMessageHandler(message, sender, sendResponse) {
       return true;
     }
 
+    if (message.type === 'GET_COOKIES') {
+      // Get all cookies for the current domain
+      chrome.cookies.getAll({})
+        .then(cookies => safeSendResponse(sendResponse, { success: true, cookies }))
+        .catch(error => safeSendResponse(sendResponse, { success: false, error: error.message }));
+      return true;
+    }
+
+    if (message.type === 'COOKIE_WARNING_SHOWN') {
+      // Log cookie warning shown (for analytics)
+      console.log('Cookie warning shown:', message.payload);
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
+    if (message.type === 'PAGE_RISK_SHOWN') {
+      // Log page risk badge shown (for analytics)
+      console.log('Page risk badge shown:', message.payload);
+      safeSendResponse(sendResponse, { success: true });
+      return true;
+    }
+
     safeSendResponse(sendResponse, { success: false, error: `Unknown message type: ${message.type}` });
     return true;
   } catch (error) {
